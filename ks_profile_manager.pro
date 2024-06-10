@@ -51,7 +51,9 @@ PRO KS_PROFMAN_SAVE_PRF
       sxaddpar,prf_head,"BUNIT",sxpar(header_cub,"BUNIT"),after="NAXIS1"
       sxaddpar,prf_head,"CTYPE1",sxpar(header_cub,"CTYPE3"),after="NAXIS1"
       sxaddpar,prf_head,"CRPIX1",sxpar(header_cub,"CRPIX3"),after="NAXIS1"
-      sxaddpar,prf_head,"CDELT1",sxpar(header_cub,"CDELT3"),after="NAXIS1"
+      xdelt=sxpar(header_cub,"CDELT3")
+      if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
+      sxaddpar,prf_head,"CDELT1",xdelt,after="NAXIS1"      
       sxaddpar,prf_head,"CRVAL1",sxpar(header_cub,"CRVAL3"),after="NAXIS1"
       sxaddhist,"KINESCOPE: Profile saved from data cube "+filenames[0],prf_head
       sxaddhist,"KINESCOPE: See "+logfile+" for description",prf_head
@@ -65,7 +67,9 @@ PRO KS_PROFMAN_SAVE_PRF
       sxaddpar,prf_head_fit,"CRVAL2",0,after="NAXIS2"
       sxaddpar,prf_head_fit,"CTYPE1",sxpar(header_cub,"CTYPE3"),after="NAXIS2"
       sxaddpar,prf_head_fit,"CRPIX1",sxpar(header_cub,"CRPIX3"),after="NAXIS2"
-      sxaddpar,prf_head_fit,"CDELT1",sxpar(header_cub,"CDELT3"),after="NAXIS2"
+      xdelt=sxpar(header_cub,"CDELT3")
+      if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
+      sxaddpar,prf_head_fit,"CDELT1",xdelt,after="NAXIS2"
       sxaddpar,prf_head_fit,"CRVAL1",sxpar(header_cub,"CRVAL3"),after="NAXIS2"
       sxaddhist,"KINESCOPE: FIT RESULTS of profile saved from data cube "+filenames[0],prf_head_fit
       sxaddhist,"KINESCOPE: See "+logfile+" for description",prf_head_fit
@@ -116,8 +120,8 @@ PRO KS_PROFMAN_SAVE_PRF
        openw,u,fitsfile_dir+logfile_name+"_fitres.txt",/get_lun
 
        printf,u,"Profiles fitting result (see "+logfile+" for description)"
-       printf,u,"##############################################################################################################################################"
-       printf,u,"Prof#  Name   S/N    FLUX_TOT     CENT1   SIGMA1   AMPL1    FLUX1    CENT2     SIGMA2     AMPL2     FLUX2    CENT3   SIGMA3   AMPL3   FLUX3    CONT   Resid/Noise Disp_subtracted"
+       printf,u,"###################################################################################################################################################################################################################"
+       printf,u,"Prof#  Name   S/N    FLUX_TOT     CENT1   SIGMA1   AMPL1    FLUX1    CENT2     SIGMA2     AMPL2     FLUX2    CENT3   SIGMA3   AMPL3   FLUX3    CONT   Resid/Noise Disp_subtracted  MOM0   MOM1   MOM2   MOM3   MOM4"
        
        frm="(G0.4)"
        FOR i=0,nr-1 do begin
@@ -131,7 +135,8 @@ PRO KS_PROFMAN_SAVE_PRF
               "  "+string((*prof_storage[indexes[rec[i]]].fitted_ampl)[2],format=frm)+"  "+string((*prof_storage[indexes[rec[i]]].fitted_flux)[2],format=frm)+"  "+$
               string(prof_storage[indexes[rec[i]]].fitted_cont,format=frm)+"   "+$
               string(total(abs(*prof_storage[indexes[rec[i]]].fitted_resid),/nan)/flux*prof_storage[indexes[rec[i]]].snr,format="(F0.2)")+"    "+ $
-              string(extern_disp.vel,format="(F0.2)")
+              string(extern_disp.vel,format="(F0.2)")+"    "+string(prof_storage[indexes[rec[i]]].mom0,format=frm)+"   "+string(prof_storage[indexes[rec[i]]].mom1,format=frm)+"   "+$
+              string(prof_storage[indexes[rec[i]]].mom2,format=frm)+"   "+string(prof_storage[indexes[rec[i]]].mom3,format=frm)+"   "+string(prof_storage[indexes[rec[i]]].mom4,format=frm)
           printf,u,txtstr 
        ENDFOR
        close,u
@@ -163,7 +168,6 @@ PRO KS_PROFMAN_LOAD_PRF
      
      ;WHAT??? WHY NAMES == rootname???? Check ks_sxpar later
      nprf=n_elements(names)
-     print,names,colors,fitsdir
 
 END
 
@@ -190,8 +194,12 @@ PRO KS_PROFMAN_FIT_RUN,indexes=indexes
            min_ampl: *prof_storage[indexes[i]].min_ampl,min_cent: *prof_storage[indexes[i]].min_cent, min_fwhm: *prof_storage[indexes[i]].min_fwhm,$
            cont: prof_storage[indexes[i]].cont,setmax_cont: prof_storage[indexes[i]].setmax_cont,setmin_cont: prof_storage[indexes[i]].setmin_cont,$
            max_cont: prof_storage[indexes[i]].max_cont,min_cont: prof_storage[indexes[i]].min_cont,fixcont: prof_storage[indexes[i]].fixcont} 
-   KS_FITTING, xscale, prof, contin=contin, out_models=out_models,manual_params=params, $
-              out_maps=out_maps, inst_vel=inst_fwhm.vel, prof_type=fit_proftype, method=ks_profman_method
+   contin=prof_storage[indexes[i]].cont
+   
+   
+   KS_FITTING, xscale, prof, contin=contin, out_models=out_models,manual_params=params, sort_mode=ks_analysis_sortmode, $
+              out_maps=out_maps, inst_vel=inst_fwhm.vel, prof_type=fit_proftype, method=ks_profman_method,$
+              moments=[prof_storage[indexes[i]].mom1,prof_storage[indexes[i]].mom2,prof_storage[indexes[i]].mom3,prof_storage[indexes[i]].mom4]
    
    *prof_storage[indexes[i]].fitted_ampl=[out_maps.i1,out_maps.i2,out_maps.i3]
    *prof_storage[indexes[i]].fitted_cent=[out_maps.v1,out_maps.v2,out_maps.v3]
@@ -215,54 +223,54 @@ PRO KS_PROFMAN_READ_COMPSVAL
   WIDGET_CONTROL, ks_profman_comp1_a, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_a, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_a, get_value=p2
-  *prof_storage[prof_selected+1].ampl=[p0,p1,p2]
+  *prof_storage[prof_selected+1].ampl=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_f, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_f, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_f, get_value=p2
-  *prof_storage[prof_selected+1].fwhm=[p0,p1,p2]
+  *prof_storage[prof_selected+1].fwhm=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_c, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_c, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_c, get_value=p2
-  *prof_storage[prof_selected+1].cent=[p0,p1,p2]
+  *prof_storage[prof_selected+1].cent=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_amin, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_amin, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_amin, get_value=p2
-  *prof_storage[prof_selected+1].min_ampl=[p0,p1,p2]
+  *prof_storage[prof_selected+1].min_ampl=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_fmin, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_fmin, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_fmin, get_value=p2
-  *prof_storage[prof_selected+1].min_fwhm=[p0,p1,p2]
+  *prof_storage[prof_selected+1].min_fwhm=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_cmin, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_cmin, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_cmin, get_value=p2
-  *prof_storage[prof_selected+1].min_cent=[p0,p1,p2]
+  *prof_storage[prof_selected+1].min_cent=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_amax, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_amax, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_amax, get_value=p2
-  *prof_storage[prof_selected+1].max_ampl=[p0,p1,p2]
+  *prof_storage[prof_selected+1].max_ampl=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_fmax, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_fmax, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_fmax, get_value=p2
-  *prof_storage[prof_selected+1].max_fwhm=[p0,p1,p2]
+  *prof_storage[prof_selected+1].max_fwhm=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_comp1_cmax, get_value=p0
   WIDGET_CONTROL, ks_profman_comp2_cmax, get_value=p1
   WIDGET_CONTROL, ks_profman_comp3_cmax, get_value=p2
-  *prof_storage[prof_selected+1].max_cent=[p0,p1,p2]
+  *prof_storage[prof_selected+1].max_cent=double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_profman_cont, get_value=p0
   WIDGET_CONTROL, ks_profman_contmin, get_value=p1
   WIDGET_CONTROL, ks_profman_contmax, get_value=p2
-  prof_storage[prof_selected+1].cont=p0
-  prof_storage[prof_selected+1].min_cont=p1
-  prof_storage[prof_selected+1].max_cont=p2
+  prof_storage[prof_selected+1].cont=double(p0)
+  prof_storage[prof_selected+1].min_cont=double(p1)
+  prof_storage[prof_selected+1].max_cont=double(p2)
 END
 
 PRO KS_PROFMAN_SAVE_PS
@@ -279,7 +287,7 @@ PRO KS_PROFMAN_SAVE_PS
           if (psfile_name eq '') then return
           cd,disk+psfile_dir
         
-        ps_start,file,/quiet       
+        cgps_open,file,/quiet       
           if axes_info.ztype eq -1 then xtit = "X (unrecognized units)"
           if axes_info.ztype eq 0 or axes_info.ztype eq 1 then xtit = "Velocity, km s$\up-1$"
           if axes_info.ztype ge 2 and axes_info.ztype le 4 then xtit = "Wavelength, "+axes_info.zunit[axes_info.ztype+1]
@@ -334,7 +342,7 @@ PRO KS_PROFMAN_SAVE_PS
            
             ENDFOR
           ENDFOR 
-        ps_end
+        cgps_close
     
   END  
 
@@ -398,37 +406,37 @@ PRO KS_PROFMAN_UPD_COMPS
     WIDGET_CONTROL,ks_profman_comp2_cfix,set_button=0 > (*prof_storage[prof_selected+1].fixcent)[1] < 1
     WIDGET_CONTROL,ks_profman_comp3_cfix,set_button=0 > (*prof_storage[prof_selected+1].fixcent)[2] < 1
     
-    WIDGET_CONTROL,ks_profman_comp1_a,set_value=string((*prof_storage[prof_selected+1].ampl)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_a,set_value=string((*prof_storage[prof_selected+1].ampl)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_a,set_value=string((*prof_storage[prof_selected+1].ampl)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_f,set_value=string((*prof_storage[prof_selected+1].fwhm)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_f,set_value=string((*prof_storage[prof_selected+1].fwhm)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_f,set_value=string((*prof_storage[prof_selected+1].fwhm)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_c,set_value=string((*prof_storage[prof_selected+1].cent)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_c,set_value=string((*prof_storage[prof_selected+1].cent)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_c,set_value=string((*prof_storage[prof_selected+1].cent)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_amin,set_value=string((*prof_storage[prof_selected+1].min_ampl)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_amin,set_value=string((*prof_storage[prof_selected+1].min_ampl)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_amin,set_value=string((*prof_storage[prof_selected+1].min_ampl)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_fmin,set_value=string((*prof_storage[prof_selected+1].min_fwhm)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_fmin,set_value=string((*prof_storage[prof_selected+1].min_fwhm)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_fmin,set_value=string((*prof_storage[prof_selected+1].min_fwhm)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_cmin,set_value=string((*prof_storage[prof_selected+1].min_cent)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_cmin,set_value=string((*prof_storage[prof_selected+1].min_cent)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_cmin,set_value=string((*prof_storage[prof_selected+1].min_cent)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_amax,set_value=string((*prof_storage[prof_selected+1].max_ampl)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_amax,set_value=string((*prof_storage[prof_selected+1].max_ampl)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_amax,set_value=string((*prof_storage[prof_selected+1].max_ampl)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_fmax,set_value=string((*prof_storage[prof_selected+1].max_fwhm)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_fmax,set_value=string((*prof_storage[prof_selected+1].max_fwhm)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_fmax,set_value=string((*prof_storage[prof_selected+1].max_fwhm)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp1_cmax,set_value=string((*prof_storage[prof_selected+1].max_cent)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp2_cmax,set_value=string((*prof_storage[prof_selected+1].max_cent)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_comp3_cmax,set_value=string((*prof_storage[prof_selected+1].max_cent)[2],format="(G0.4)")
+    WIDGET_CONTROL,ks_profman_comp1_a,set_value=ks_float2str((*prof_storage[prof_selected+1].ampl)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_a,set_value=ks_float2str((*prof_storage[prof_selected+1].ampl)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_a,set_value=ks_float2str((*prof_storage[prof_selected+1].ampl)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_f,set_value=ks_float2str((*prof_storage[prof_selected+1].fwhm)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_f,set_value=ks_float2str((*prof_storage[prof_selected+1].fwhm)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_f,set_value=ks_float2str((*prof_storage[prof_selected+1].fwhm)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_c,set_value=ks_float2str((*prof_storage[prof_selected+1].cent)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_c,set_value=ks_float2str((*prof_storage[prof_selected+1].cent)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_c,set_value=ks_float2str((*prof_storage[prof_selected+1].cent)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_amin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_ampl)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_amin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_ampl)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_amin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_ampl)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_fmin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_fwhm)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_fmin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_fwhm)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_fmin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_fwhm)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_cmin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_cent)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_cmin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_cent)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_cmin,set_value=ks_float2str((*prof_storage[prof_selected+1].min_cent)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_amax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_ampl)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_amax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_ampl)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_amax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_ampl)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_fmax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_fwhm)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_fmax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_fwhm)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_fmax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_fwhm)[2],4)
+    WIDGET_CONTROL,ks_profman_comp1_cmax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_cent)[0],4)
+    WIDGET_CONTROL,ks_profman_comp2_cmax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_cent)[1],4)
+    WIDGET_CONTROL,ks_profman_comp3_cmax,set_value=ks_float2str((*prof_storage[prof_selected+1].max_cent)[2],4)
     
-    WIDGET_CONTROL,ks_profman_cont,set_value=string((prof_storage[prof_selected+1].cont),format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_contmin,set_value=string((prof_storage[prof_selected+1].min_cont),format="(G0.4)")
-    WIDGET_CONTROL,ks_profman_contmax,set_value=string((prof_storage[prof_selected+1].max_cont),format="(G0.4)")
+    WIDGET_CONTROL,ks_profman_cont,set_value=ks_float2str((prof_storage[prof_selected+1].cont),4)
+    WIDGET_CONTROL,ks_profman_contmin,set_value=ks_float2str((prof_storage[prof_selected+1].min_cont),4)
+    WIDGET_CONTROL,ks_profman_contmax,set_value=ks_float2str((prof_storage[prof_selected+1].max_cont),4)
     
     WIDGET_CONTROL,ks_profman_contsetmin,set_button=0 > (prof_storage[prof_selected+1].setmin_cont) < 1
     WIDGET_CONTROL,ks_profman_contsetmax,set_button=0 > (prof_storage[prof_selected+1].setmax_cont) < 1
@@ -448,6 +456,9 @@ PRO KS_PROFMAN_SHOW_PROF
     if axes_info.ztype eq 0 or axes_info.ztype eq 1 then xtit = "Velocity, km s$\up-1$"
     if axes_info.ztype ge 2 and axes_info.ztype le 4 then xtit = "Wavelength, "+axes_info.zunit[axes_info.ztype+1]
     if axes_info.ztype ge 5 then xtit = "Frequency, "+axes_info.zunit[axes_info.ztype+1]
+    
+    show_xrange=*prof_storage[prof_selected+1].xr
+    
     
     cgplot,*prof_storage[prof_selected+1].x,*prof_storage[prof_selected+1].y,$
            ytit = "Intensity, "+ axes_info.I, xtit = xtit, xr=*prof_storage[prof_selected+1].xr, yr=*prof_storage[prof_selected+1].yr,$
@@ -532,7 +543,7 @@ PRO KS_PROFMAN_SHOW_PROF
        if (*prof_storage[prof_selected+1].fitted_isset)[0] eq 1 then begin
          WIDGET_CONTROL,ks_profman_monitors[6].obj,set_value=string((*prof_storage[prof_selected+1].fitted_cent)[0],format=format)
          WIDGET_CONTROL,ks_profman_monitors[7].obj,set_value=string((*prof_storage[prof_selected+1].fitted_fwhm)[0]/2.35482,format=format)+$
-         " ("+string((*prof_storage[prof_selected+1].fitted_fwhm)[0],format=format)+")"
+         " ("+string(sqrt(((*prof_storage[prof_selected+1].fitted_fwhm)[0])^2+extern_disp.vel^2),format=format)+")"
          WIDGET_CONTROL,ks_profman_monitors[8].obj,set_value=string((*prof_storage[prof_selected+1].fitted_ampl)[0],format=format)
          WIDGET_CONTROL,ks_profman_monitors[9].obj,set_value=string((*prof_storage[prof_selected+1].fitted_flux)[0],format=format)
        endif else begin
@@ -541,7 +552,7 @@ PRO KS_PROFMAN_SHOW_PROF
        if (*prof_storage[prof_selected+1].fitted_isset)[1] eq 1 then begin
          WIDGET_CONTROL,ks_profman_monitors[10].obj,set_value=string((*prof_storage[prof_selected+1].fitted_cent)[1],format=format)
          WIDGET_CONTROL,ks_profman_monitors[11].obj,set_value=string((*prof_storage[prof_selected+1].fitted_fwhm)[1]/2.35482,format=format)+$
-         " ("+string((*prof_storage[prof_selected+1].fitted_fwhm)[1],format=format)+")"
+         " ("+string(sqrt(((*prof_storage[prof_selected+1].fitted_fwhm)[1])^2+extern_disp.vel^2),format=format)+")"
          WIDGET_CONTROL,ks_profman_monitors[12].obj,set_value=string((*prof_storage[prof_selected+1].fitted_ampl)[1],format=format)
          WIDGET_CONTROL,ks_profman_monitors[13].obj,set_value=string((*prof_storage[prof_selected+1].fitted_flux)[1],format=format)
        endif else begin
@@ -550,7 +561,7 @@ PRO KS_PROFMAN_SHOW_PROF
        if (*prof_storage[prof_selected+1].fitted_isset)[2] eq 1 then begin
          WIDGET_CONTROL,ks_profman_monitors[14].obj,set_value=string((*prof_storage[prof_selected+1].fitted_cent)[2],format=format)
          WIDGET_CONTROL,ks_profman_monitors[15].obj,set_value=string((*prof_storage[prof_selected+1].fitted_fwhm)[2]/2.35482,format=format)+$
-         " ("+string((*prof_storage[prof_selected+1].fitted_fwhm)[2],format=format)+")"
+         " ("+string(sqrt(((*prof_storage[prof_selected+1].fitted_fwhm)[2])^2+extern_disp.vel^2),format=format)+")"
          WIDGET_CONTROL,ks_profman_monitors[16].obj,set_value=string((*prof_storage[prof_selected+1].fitted_ampl)[2],format=format)
          WIDGET_CONTROL,ks_profman_monitors[17].obj,set_value=string((*prof_storage[prof_selected+1].fitted_flux)[2],format=format)
        endif else begin
@@ -769,6 +780,14 @@ pro KS_PROFILE_MANAGER_EVENT, event
  
  
   Case ev OF
+  
+  'prof_display_xrange': BEGIN
+    WIDGET_CONTROL,ks_profman_field_xrange[0],get_val=tmp
+    ks_profman__xrange[0]=tmp
+    WIDGET_CONTROL,ks_profman_xrange[1],get_val=tmp
+    ks_profman__xrange[1]=tmp
+    KS_PROFMAN_SHOW_PROF
+  END
   
   'fit_cur': BEGIN
     if prof_selected[0] ne -1 and n_prof_table gt 0 then KS_PROFMAN_FIT_RUN, indexes=prof_selected+1
@@ -1143,7 +1162,20 @@ PRO KS_PROFILE_MANAGER
   
   ks_prof_disp_setup_b=WIDGET_BASE(ks_prof_disp_setup_and_mon_b,/col,ypad=0,yoffset=0)
   
+  
+  ; === Диапазон длин волн/скоростей (для профиля)
+  ks_profman_field_xrange_obj=objarr(2)
+  ks_profman_field_xrange=lonarr(2)
+  lab=WIDGET_LABEL(ks_prof_disp_setup_b,val="Prof. X-range:",font=titfont)
+  ks_profman_tmp_b=WIDGET_BASE(ks_prof_disp_setup_b,/row,/frame)
+  ks_profman_field_xrange[0]=FSC_FIELD(ks_profman_tmp_b,Title='Min:', value=ks_profman_xrange[0],uvalue='prof_display_xrange',Event_Pro='KS_PROFILE_MANAGER_Event',/CR_Only,LabelSize=25,xs=8,nonsens=0, object=tmp_obj)
+  ks_profman_field_xrange_obj[0]=tmp_obj
+  ks_profman_field_xrange[1]=FSC_FIELD(ks_profman_tmp_b,Title='Max:', value=ks_profman_xrange[1],uvalue='prof_display_xrange',Event_Pro='KS_PROFILE_MANAGER_Event',/CR_Only,LabelSize=25,xs=8,nonsens=0, object=tmp_obj)
+  ks_profman_field_xrange_obj[1]=tmp_obj
+  
   lab=WIDGET_LABEL(ks_prof_disp_setup_b,val="Show on display:",font=titfont)
+  
+
   
   ks_prof_showres=[{obj_par,'Sum of selected','show_fit_res_a',0,0,0},$
                    {obj_par,'Continuum','show_fit_res_c',0,0,0},$
@@ -1182,7 +1214,7 @@ PRO KS_PROFILE_MANAGER
     i0=bb*4+2
     output=lonarr(1)
     for i=i0,i0+3 do begin
-      KS_Monitor_Cre,tmp,ks_profman_monitors[i].name,output,/row,xs=[80,sz[4].y+10];,ys=[10,10]
+      KS_Monitor_Cre,tmp,ks_profman_monitors[i].name,output,/row,xs=[80,sz[4].y+20];,ys=[10,10]
       ks_profman_monitors[i].obj=output
     endfor
   ENDFOR

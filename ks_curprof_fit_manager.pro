@@ -19,6 +19,7 @@ PRO KS_CURPROFMAN_SHOW_PROF
         ny=sxpar(header_cub,"NAXIS2")
         refpix=sxpar(header_cub,"CRPIX3")
         xdelt=sxpar(header_cub,"CDELT3")
+        if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
         if refpix eq 0 then refpix=1
         xscale=(findgen(nz)-refpix+1)*xdelt+sxpar(header_cub,"CRVAL3")
         prof=fltarr(nz)
@@ -65,7 +66,7 @@ PRO KS_CURPROFMAN_SHOW_PROF
         WIDGET_CONTROL,ks_curprof_showres[1].obj,set_but=0
         WIDGET_CONTROL,ks_curprof_showres[1].obj,sens=0
        endelse
-       
+      
          if fit_results_maps.is_set1[xim,yim] eq 1 then begin
            WIDGET_CONTROL,ks_curprof_showres[3].obj,set_but=ks_curprof_showres[3].val
            if ks_curprof_showres[3].val then cgoplot,xscale,fit_results_model.c1[xim,yim,*]+this_contin,color="green"
@@ -106,7 +107,7 @@ PRO KS_CURPROFMAN_SHOW_PROF
           if ks_curprof_showres[5].val eq 1 and fit_results_maps.is_set3[xim,yim] then tot+=fit_results_model.c3[xim,yim,*]
           cgoplot,xscale,tot,color="magenta"
        endif
- ;=====>      print,this_contin,moms_on_fly.contin[xim,yim],fit_results_maps.contin[xim,yim],xim,yim
+
        ; Отображение результатов фиттинга (текстовых)
        
        flux=fit_results_maps.flux[xim,yim]
@@ -117,7 +118,7 @@ PRO KS_CURPROFMAN_SHOW_PROF
        if fit_results_maps.is_set1[xim,yim] eq 1 then begin
          WIDGET_CONTROL,ks_curprofman_monitors[6].obj,set_value=string(fit_results_maps.v1[xim,yim],format=format)
          WIDGET_CONTROL,ks_curprofman_monitors[7].obj,set_value=string(fit_results_maps.sigma1[xim,yim],format=format)+$
-         " ("+string(fit_results_maps.sigma1[xim,yim]*2.35482,format=format)+")"
+         " ("+string(sqrt(fit_results_maps.sigma1[xim,yim]^2+extern_disp.vel^2)*2.35482,format=format)+")"
          WIDGET_CONTROL,ks_curprofman_monitors[8].obj,set_value=string(fit_results_maps.i1[xim,yim],format=format)
          WIDGET_CONTROL,ks_curprofman_monitors[9].obj,set_value=string(fit_results_maps.f1[xim,yim],format=format)
        endif else begin
@@ -126,7 +127,7 @@ PRO KS_CURPROFMAN_SHOW_PROF
        if fit_results_maps.is_set2[xim,yim] eq 1 then begin
          WIDGET_CONTROL,ks_curprofman_monitors[10].obj,set_value=string(fit_results_maps.v2[xim,yim],format=format)
          WIDGET_CONTROL,ks_curprofman_monitors[11].obj,set_value=string(fit_results_maps.sigma2[xim,yim],format=format)+$
-         " ("+string(fit_results_maps.sigma2[xim,yim]*2.35482,format=format)+")"
+         " ("+string(sqrt(fit_results_maps.sigma2[xim,yim]^2+extern_disp.vel^2)*2.35482,format=format)+")"
          WIDGET_CONTROL,ks_curprofman_monitors[12].obj,set_value=string(fit_results_maps.i2[xim,yim],format=format)
          WIDGET_CONTROL,ks_curprofman_monitors[13].obj,set_value=string(fit_results_maps.f2[xim,yim],format=format)
        endif else begin
@@ -135,7 +136,7 @@ PRO KS_CURPROFMAN_SHOW_PROF
        if fit_results_maps.is_set3[xim,yim] eq 1 then begin
          WIDGET_CONTROL,ks_curprofman_monitors[14].obj,set_value=string(fit_results_maps.v3[xim,yim],format=format)
          WIDGET_CONTROL,ks_curprofman_monitors[15].obj,set_value=string(fit_results_maps.sigma3[xim,yim],format=format)+$
-         " ("+string(fit_results_maps.sigma3[xim,yim]*2.35482,format=format)+")"
+         " ("+string(sqrt(fit_results_maps.sigma3[xim,yim]^2+extern_disp.vel^2)*2.35482,format=format)+")"
          WIDGET_CONTROL,ks_curprofman_monitors[16].obj,set_value=string(fit_results_maps.i3[xim,yim],format=format)
          WIDGET_CONTROL,ks_curprofman_monitors[17].obj,set_value=string(fit_results_maps.f3[xim,yim],format=format)
        endif else begin
@@ -175,6 +176,64 @@ PRO KS_CURPROFMAN_SHOW_PROF
 ;END
 
 
+PRO KS_CHANGE_COMPS, x,y, c0,c1
+  COMMON KS_ANALYSIS
+  maps_tmp=fit_results_maps
+  models_tmp=fit_results_model
+  
+  
+  if c0 eq 0 and c1 eq 1 then begin
+      maps_tmp.is_set1[x,y]=fit_results_maps.is_set2[x,y]
+      maps_tmp.i1[x,y]=fit_results_maps.i2[x,y]
+      maps_tmp.sigma1[x,y]=fit_results_maps.sigma2[x,y]
+      maps_tmp.v1[x,y]=fit_results_maps.v2[x,y]
+      maps_tmp.f1[x,y]=fit_results_maps.f2[x,y]
+      models_tmp.c1[x,y,*]=fit_results_model.c2[x,y,*]
+      maps_tmp.is_set2[x,y]=fit_results_maps.is_set1[x,y]
+      maps_tmp.i2[x,y]=fit_results_maps.i1[x,y]
+      maps_tmp.sigma2[x,y]=fit_results_maps.sigma1[x,y]
+      maps_tmp.v2[x,y]=fit_results_maps.v1[x,y]
+      maps_tmp.f2[x,y]=fit_results_maps.f1[x,y]
+      models_tmp.c2[x,y,*]=fit_results_model.c1[x,y,*]
+  endif
+  
+  if c0 eq 0 and c1 eq 2 then begin
+      maps_tmp.i1[x,y]=fit_results_maps.i3[x,y]
+      maps_tmp.is_set1[x,y]=fit_results_maps.is_set3[x,y]
+      maps_tmp.sigma1[x,y]=fit_results_maps.sigma3[x,y]
+      maps_tmp.v1[x,y]=fit_results_maps.v3[x,y]
+      maps_tmp.f1[x,y]=fit_results_maps.f3[x,y]
+      models_tmp.c1[x,y,*]=fit_results_model.c3[x,y,*]
+      maps_tmp.is_set3[x,y]=fit_results_maps.is_set1[x,y]
+      maps_tmp.i3[x,y]=fit_results_maps.i1[x,y]
+      maps_tmp.sigma3[x,y]=fit_results_maps.sigma1[x,y]
+      maps_tmp.v3[x,y]=fit_results_maps.v1[x,y]
+      maps_tmp.f3[x,y]=fit_results_maps.f1[x,y]
+      models_tmp.c3[x,y,*]=fit_results_model.c1[x,y,*]
+  endif
+  
+  if c0 eq 1 and c1 eq 2 then begin
+      maps_tmp.is_set2[x,y]=fit_results_maps.is_set3[x,y]
+      maps_tmp.i2[x,y]=fit_results_maps.i3[x,y]
+      maps_tmp.sigma2[x,y]=fit_results_maps.sigma3[x,y]
+      maps_tmp.v2[x,y]=fit_results_maps.v3[x,y]
+      maps_tmp.f2[x,y]=fit_results_maps.f3[x,y]
+      models_tmp.c2[x,y,*]=fit_results_model.c3[x,y,*]
+      maps_tmp.is_set3[x,y]=fit_results_maps.is_set2[x,y]
+      maps_tmp.i3[x,y]=fit_results_maps.i2[x,y]
+      maps_tmp.sigma3[x,y]=fit_results_maps.sigma2[x,y]
+      maps_tmp.v3[x,y]=fit_results_maps.v2[x,y]
+      maps_tmp.f3[x,y]=fit_results_maps.f2[x,y]
+      models_tmp.c3[x,y,*]=fit_results_model.c2[x,y,*]
+  endif
+  
+  fit_results_maps=maps_tmp
+  fit_results_model=models_tmp
+  
+  
+
+END
+
 
 
 PRO KS_CURPROFMAN_FIT_RUN
@@ -188,11 +247,11 @@ PRO KS_CURPROFMAN_FIT_RUN
    nz=sxpar(header_cub,"NAXIS3")
    refpix=sxpar(header_cub,"CRPIX3")
    xdelt=sxpar(header_cub,"CDELT3")
+   if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
    if refpix eq 0 then refpix=1
    xscale=(findgen(nz)-refpix+1)*xdelt+sxpar(header_cub,"CRVAL3")
-   if axes_info.ztype eq 1 then xscale = xscale/1e3
-   prof=fltarr(nz)
-   prof[*]=cub[xim,yim,*]
+   if axes_info.ztype eq 1 then xscale = xscale/1.e3
+   prof=double(reform(cub[xim,yim,*]))
    
    KS_CURPROFMAN_READ_COMPSVAL
    
@@ -204,8 +263,13 @@ PRO KS_CURPROFMAN_FIT_RUN
            min_ampl: ks_curprofman_inicomps.min_ampl,min_cent: ks_curprofman_inicomps.min_cent, min_fwhm: ks_curprofman_inicomps.min_fwhm,$
            cont: ks_curprofman_inicomps.cont,setmax_cont: ks_curprofman_inicomps.setmax_cont,setmin_cont: ks_curprofman_inicomps.setmin_cont,$
            max_cont: ks_curprofman_inicomps.max_cont,min_cont: ks_curprofman_inicomps.min_cont,fixcont: ks_curprofman_inicomps.fix_cont} 
-   KS_FITTING, xscale, prof, contin=contin, out_models=out_models,manual_params=params, $
-              out_maps=out_maps, inst_vel=inst_fwhm.vel, prof_type=fit_proftype, method=ks_curprofman_method
+   
+
+   contin=ks_curprofman_inicomps.cont
+   
+   KS_FITTING, xscale, prof, contin=contin, out_models=out_models,manual_params=params, sort_mode=ks_analysis_sortmode,$
+              out_maps=out_maps, inst_vel=inst_fwhm.vel, prof_type=fit_proftype, method=ks_curprofman_method,moments=[fit_results_maps.mom1[xim,yim],fit_results_maps.mom2[xim,yim],$
+                      fit_results_maps.mom3[xim,yim],fit_results_maps.mom4[xim,yim]]
    
    
           fit_results_maps.i1[xim,yim]=out_maps.i1
@@ -236,6 +300,8 @@ PRO KS_CURPROFMAN_FIT_RUN
           fit_results_model.resid[xim,yim,*]=out_models.resid
           
           
+
+          
           ;creation of total flux map
           tmp=0
           if fit_results_maps.is_set1[xim,yim] then tmp+=fit_results_maps.f1[xim,yim]
@@ -244,31 +310,8 @@ PRO KS_CURPROFMAN_FIT_RUN
           if (fit_results_maps.is_set1[xim,yim]+fit_results_maps.is_set2[xim,yim]+fit_results_maps.is_set3[xim,yim]) eq 0 then $
               fit_results_maps.f_tot[xim,yim]=!Values.F_NAN else  fit_results_maps.f_tot[xim,yim]=tmp
           
-          ;creation of shift map
-          nomask=0
-          if fit_results_maps.is_set1[xim,yim] eq 1 and fit_results_maps.is_set2[xim,yim] eq 1 and fit_results_maps.is_set3[xim,yim] eq 0 then begin
-             fit_results_maps.v_shift[xim,yim]=fit_results_maps.v2[xim,yim]-fit_results_maps.v1[xim,yim]
-             nomask=1
-          endif
-          if fit_results_maps.is_set1[xim,yim] eq 1 and fit_results_maps.is_set2[xim,yim] eq 0 and fit_results_maps.is_set3[xim,yim] eq 1 then begin
-             fit_results_maps.v_shift[xim,yim]=fit_results_maps.v3[xim,yim]-fit_results_maps.v1[xim,yim]
-             nomask=1
-          endif
-          if fit_results_maps.is_set1[xim,yim] eq 0 and fit_results_maps.is_set2[xim,yim] eq 1 and fit_results_maps.is_set3[xim,yim] eq 1 then begin
-             arr=[fit_results_maps.v2[xim,yim]-fit_results_maps.v3[xim,yim],$
-                  fit_results_maps.v3[xim,yim]-fit_results_maps.v2[xim,yim]]/2.
-             m=max([fit_results_maps.f2[xim,yim],fit_results_maps.f3[xim,yim]],mpos)
-             fit_results_maps.v_shift[xim,yim]=arr[mpos]
-             nomask=1
-          endif
-          if fit_results_maps.is_set1[xim,yim] eq 1 and fit_results_maps.is_set2[xim,yim] eq 1 and fit_results_maps.is_set3[xim,yim] eq 1 then begin
-             arr=[fit_results_maps.v2[xim,yim]-fit_results_maps.v1[xim,yim],$
-                  fit_results_maps.v3[xim,yim]-fit_results_maps.v1[xim,yim]]
-             m=max([fit_results_maps.f2[xim,yim],fit_results_maps.f3[xim,yim]],mpos)
-             fit_results_maps.v_shift[xim,yim]=arr[mpos]
-             nomask=1
-          endif
-           if nomask eq 0 then fit_results_maps.v_shift[xim,yim]=!Values.F_NAN
+          
+          KS_SHIFTED_COMP_MAPS, fit_results_maps, xim, yim
           KS_CURPROFMAN_SHOW_PROF
 END
 
@@ -279,54 +322,54 @@ PRO KS_CURPROFMAN_READ_COMPSVAL
   WIDGET_CONTROL, ks_curprofman_comp1_a, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_a, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_a, get_value=p2
-  ks_curprofman_inicomps.ampl=[p0,p1,p2]
+  ks_curprofman_inicomps.ampl=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_f, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_f, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_f, get_value=p2
-  ks_curprofman_inicomps.fwhm=[p0,p1,p2]
+  ks_curprofman_inicomps.fwhm=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_c, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_c, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_c, get_value=p2
-  ks_curprofman_inicomps.cent=[p0,p1,p2]
+  ks_curprofman_inicomps.cent=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_amin, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_amin, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_amin, get_value=p2
-  ks_curprofman_inicomps.min_ampl=[p0,p1,p2]
+  ks_curprofman_inicomps.min_ampl=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_fmin, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_fmin, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_fmin, get_value=p2
-  ks_curprofman_inicomps.min_fwhm=[p0,p1,p2]
+  ks_curprofman_inicomps.min_fwhm=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_cmin, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_cmin, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_cmin, get_value=p2
-  ks_curprofman_inicomps.min_cent=[p0,p1,p2]
+  ks_curprofman_inicomps.min_cent=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_amax, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_amax, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_amax, get_value=p2
-  ks_curprofman_inicomps.max_ampl=[p0,p1,p2]
+  ks_curprofman_inicomps.max_ampl=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_fmax, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_fmax, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_fmax, get_value=p2
-  ks_curprofman_inicomps.max_fwhm=[p0,p1,p2]
+  ks_curprofman_inicomps.max_fwhm=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_comp1_cmax, get_value=p0
   WIDGET_CONTROL, ks_curprofman_comp2_cmax, get_value=p1
   WIDGET_CONTROL, ks_curprofman_comp3_cmax, get_value=p2
-  ks_curprofman_inicomps.max_cent=[p0,p1,p2]
+  ks_curprofman_inicomps.max_cent=Double([p0,p1,p2])
   
   WIDGET_CONTROL, ks_curprofman_cont, get_value=p0
   WIDGET_CONTROL, ks_curprofman_contmin, get_value=p1
   WIDGET_CONTROL, ks_curprofman_contmax, get_value=p2
-  ks_curprofman_inicomps.cont=p0
-  ks_curprofman_inicomps.min_cont=p1
-  ks_curprofman_inicomps.max_cont=p2
+  ks_curprofman_inicomps.cont=double(p0)
+  ks_curprofman_inicomps.min_cont=double(p1)
+  ks_curprofman_inicomps.max_cont=double(p2)
   
 END
 
@@ -342,7 +385,7 @@ PRO KS_CURPROFMAN_SAVE_PS
           if (psfile_name eq '') then return
           cd,disk+psfile_dir
         
-        ps_start,file,/quiet       
+        cgps_open,file,/quiet       
           if axes_info.ztype eq -1 then xtit = "X (unrecognized units)"
           if axes_info.ztype eq 0 or axes_info.ztype eq 1 then xtit = "Velocity, km s$\up-1$"
           if axes_info.ztype ge 2 and axes_info.ztype le 4 then xtit = "Wavelength, "+axes_info.zunit[axes_info.ztype+1]
@@ -354,6 +397,7 @@ PRO KS_CURPROFMAN_SAVE_PS
           nz=sxpar(header_cub,"NAXIS3")
           refpix=sxpar(header_cub,"CRPIX3")
           xdelt=sxpar(header_cub,"CDELT3")
+          if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
           if refpix eq 0 then refpix=1
           xscale=(findgen(nz)-refpix+1)*xdelt+sxpar(header_cub,"CRVAL3")
           if axes_info.ztype eq 1 then xscale = xscale/1e3
@@ -386,7 +430,7 @@ PRO KS_CURPROFMAN_SAVE_PS
                     cgoplot,xscale,tot,color="magenta"
                  endif
               ENDIF
-        ps_end
+        cgps_close
     
   END  
 
@@ -408,11 +452,11 @@ PRO KS_CURPROFMAN_UPD_COMPS
   nz=sxpar(header_cub,"NAXIS3")
   refpix=sxpar(header_cub,"CRPIX3")
   xdelt=sxpar(header_cub,"CDELT3")
+  if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
   if refpix eq 0 then refpix=1
   xscale=(findgen(nz)-refpix+1)*xdelt+sxpar(header_cub,"CRVAL3")
-  if axes_info.ztype eq 1 then xscale = xscale/1e3
-  prof=fltarr(nz)
-  prof[*]=cub[xim,yim,*]
+  if axes_info.ztype eq 1 then xscale = xscale/1.e3
+  prof=double(reform(cub[xim,yim,*]))
   
   
   if moms_on_fly.done[xim,yim] eq 0 then begin
@@ -429,6 +473,7 @@ PRO KS_CURPROFMAN_UPD_COMPS
   
   
   if finite(moms_on_fly.contin[xim,yim]) then this_contin=moms_on_fly.contin[xim,yim] else this_contin=0
+  if fit_results_maps.fitted[xim,yim] eq 1 then this_contin=fit_results_maps.contin[xim,yim]
   moments_struct={mom1:moms_on_fly.mom1[xim,yim],mom2:moms_on_fly.mom2[xim,yim],mom3:moms_on_fly.mom3[xim,yim],mom4:moms_on_fly.mom4[xim,yim],snr:moms_on_fly.snr[xim,yim]}
   ini_comps=KS_GET_INITIAL_COMPS(xscale, prof, moments_struct, this_contin)
   
@@ -438,45 +483,49 @@ PRO KS_CURPROFMAN_UPD_COMPS
     fit_results_maps.mom3[xim,yim]=moms_on_fly.mom3[xim,yim]
     fit_results_maps.mom4[xim,yim]=moms_on_fly.mom4[xim,yim]
     fit_results_maps.snr[xim,yim]=moms_on_fly.snr[xim,yim]
-    if fit_results_maps.fitted[xim,yim] eq 1 then fit_results_maps.contin[xim,yim]=ini_comps.cont
+    if fit_results_maps.fitted[xim,yim] eq 0 then fit_results_maps.fitted[xim,yim]=2
+    if fit_results_maps.fitted[xim,yim] ne 1 then fit_results_maps.contin[xim,yim]=moms_on_fly.contin[xim,yim]
           
     WIDGET_CONTROL,ks_curprofman_setcomp1,set_button=0 > (ini_comps.comps)[0] < 1
     WIDGET_CONTROL,ks_curprofman_setcomp2,set_button=0 > (ini_comps.comps)[1] < 1
     WIDGET_CONTROL,ks_curprofman_setcomp3,set_button=0 > (ini_comps.comps)[2] < 1
     
-    WIDGET_CONTROL,ks_curprofman_comp1_a,set_value=string((ini_comps.ampl)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp2_a,set_value=string((ini_comps.ampl)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp3_a,set_value=string((ini_comps.ampl)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp1_f,set_value=string((ini_comps.fwhm)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp2_f,set_value=string((ini_comps.fwhm)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp3_f,set_value=string((ini_comps.fwhm)[2],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp1_c,set_value=string((ini_comps.cent)[0],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp2_c,set_value=string((ini_comps.cent)[1],format="(G0.4)")
-    WIDGET_CONTROL,ks_curprofman_comp3_c,set_value=string((ini_comps.cent)[2],format="(G0.4)")
     
-    WIDGET_CONTROL, ks_curprofman_comp1_amin, set_value=string((ini_comps.min_ampl)[0],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp2_amin, set_value=string((ini_comps.min_ampl)[1],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp3_amin, set_value=string((ini_comps.min_ampl)[2],format="(G0.4)")
+
     
-    WIDGET_CONTROL, ks_curprofman_comp1_fmin, set_value=string((ini_comps.min_fwhm)[0],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp2_fmin, set_value=string((ini_comps.min_fwhm)[1],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp3_fmin, set_value=string((ini_comps.min_fwhm)[2],format="(G0.4)")
+    WIDGET_CONTROL,ks_curprofman_comp1_a,set_value=ks_float2str((ini_comps.ampl)[0],4)
+    WIDGET_CONTROL,ks_curprofman_comp2_a,set_value=ks_float2str((ini_comps.ampl)[1],4)
+    WIDGET_CONTROL,ks_curprofman_comp3_a,set_value=ks_float2str((ini_comps.ampl)[2],4)
+    WIDGET_CONTROL,ks_curprofman_comp1_f,set_value=ks_float2str((ini_comps.fwhm)[0],4)
+    WIDGET_CONTROL,ks_curprofman_comp2_f,set_value=ks_float2str((ini_comps.fwhm)[1],4)
+    WIDGET_CONTROL,ks_curprofman_comp3_f,set_value=ks_float2str((ini_comps.fwhm)[2],4)
+    WIDGET_CONTROL,ks_curprofman_comp1_c,set_value=ks_float2str((ini_comps.cent)[0],4)
+    WIDGET_CONTROL,ks_curprofman_comp2_c,set_value=ks_float2str((ini_comps.cent)[1],4)
+    WIDGET_CONTROL,ks_curprofman_comp3_c,set_value=ks_float2str((ini_comps.cent)[2],4)
     
-    WIDGET_CONTROL, ks_curprofman_comp1_cmin, set_value=string((ini_comps.min_cent)[0],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp2_cmin, set_value=string((ini_comps.min_cent)[1],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp3_cmin, set_value=string((ini_comps.min_cent)[2],format="(G0.4)")
+    WIDGET_CONTROL, ks_curprofman_comp1_amin, set_value=ks_float2str((ini_comps.min_ampl)[0],4)
+    WIDGET_CONTROL, ks_curprofman_comp2_amin, set_value=ks_float2str((ini_comps.min_ampl)[1],4)
+    WIDGET_CONTROL, ks_curprofman_comp3_amin, set_value=ks_float2str((ini_comps.min_ampl)[2],4)
     
-    WIDGET_CONTROL, ks_curprofman_comp1_amax, set_value=string((ini_comps.max_ampl)[0],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp2_amax, set_value=string((ini_comps.max_ampl)[1],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp3_amax, set_value=string((ini_comps.max_ampl)[2],format="(G0.4)")
+    WIDGET_CONTROL, ks_curprofman_comp1_fmin, set_value=ks_float2str((ini_comps.min_fwhm)[0],4)
+    WIDGET_CONTROL, ks_curprofman_comp2_fmin, set_value=ks_float2str((ini_comps.min_fwhm)[1],4)
+    WIDGET_CONTROL, ks_curprofman_comp3_fmin, set_value=ks_float2str((ini_comps.min_fwhm)[2],4)
     
-    WIDGET_CONTROL, ks_curprofman_comp1_fmax, set_value=string((ini_comps.max_fwhm)[0],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp2_fmax, set_value=string((ini_comps.max_fwhm)[1],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp3_fmax, set_value=string((ini_comps.max_fwhm)[2],format="(G0.4)")
+    WIDGET_CONTROL, ks_curprofman_comp1_cmin, set_value=ks_float2str((ini_comps.min_cent)[0],4)
+    WIDGET_CONTROL, ks_curprofman_comp2_cmin, set_value=ks_float2str((ini_comps.min_cent)[1],4)
+    WIDGET_CONTROL, ks_curprofman_comp3_cmin, set_value=ks_float2str((ini_comps.min_cent)[2],4)
     
-    WIDGET_CONTROL, ks_curprofman_comp1_cmax, set_value=string((ini_comps.max_cent)[0],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp2_cmax, set_value=string((ini_comps.max_cent)[1],format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_comp3_cmax, set_value=string((ini_comps.max_cent)[2],format="(G0.4)")
+    WIDGET_CONTROL, ks_curprofman_comp1_amax, set_value=ks_float2str((ini_comps.max_ampl)[0],4)
+    WIDGET_CONTROL, ks_curprofman_comp2_amax, set_value=ks_float2str((ini_comps.max_ampl)[1],4)
+    WIDGET_CONTROL, ks_curprofman_comp3_amax, set_value=ks_float2str((ini_comps.max_ampl)[2],4)
+    
+    WIDGET_CONTROL, ks_curprofman_comp1_fmax, set_value=ks_float2str((ini_comps.max_fwhm)[0],4)
+    WIDGET_CONTROL, ks_curprofman_comp2_fmax, set_value=ks_float2str((ini_comps.max_fwhm)[1],4)
+    WIDGET_CONTROL, ks_curprofman_comp3_fmax, set_value=ks_float2str((ini_comps.max_fwhm)[2],4)
+    
+    WIDGET_CONTROL, ks_curprofman_comp1_cmax, set_value=ks_float2str((ini_comps.max_cent)[0],4)
+    WIDGET_CONTROL, ks_curprofman_comp2_cmax, set_value=ks_float2str((ini_comps.max_cent)[1],4)
+    WIDGET_CONTROL, ks_curprofman_comp3_cmax, set_value=ks_float2str((ini_comps.max_cent)[2],4)
         
     ks_curprofman_inicomps.min_ampl=ini_comps.min_ampl
     ks_curprofman_inicomps.min_fwhm=ini_comps.min_fwhm
@@ -527,9 +576,9 @@ PRO KS_CURPROFMAN_UPD_COMPS
     WIDGET_CONTROL, ks_curprofman_contsetmin, set_button=(ini_comps.setmin_cont)
     WIDGET_CONTROL, ks_curprofman_contsetmax, set_button=(ini_comps.setmax_cont)
     
-    WIDGET_CONTROL, ks_curprofman_contmin, set_val=string((ini_comps.min_cont),format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_contmax, set_val=string((ini_comps.max_cont),format="(G0.4)")
-    WIDGET_CONTROL, ks_curprofman_cont, set_val=string((ini_comps.cont),format="(G0.4)")
+    WIDGET_CONTROL, ks_curprofman_contmin, set_val=ks_float2str((ini_comps.min_cont),4)
+    WIDGET_CONTROL, ks_curprofman_contmax, set_val=ks_float2str((ini_comps.max_cont),4)
+    WIDGET_CONTROL, ks_curprofman_cont, set_val=ks_float2str((ini_comps.cont),4)
     
     ks_curprofman_inicomps.xr=minmax(xscale)
     intens=abs(max(prof,/nan)-min(prof,/nan))
@@ -584,7 +633,7 @@ END
 PRO KS_CURPROF_FIT_MANAGER_EVENT, event
   COMMON KS_CURPROF_MANAGER
   COMMON KS_SIZES
-  
+   COMMON KS_ANALYSIS
   
   WIDGET_CONTROL,event.ID,get_uvalue=ev
   
@@ -642,7 +691,25 @@ PRO KS_CURPROF_FIT_MANAGER_EVENT, event
       ENDCASE
      return 
     ENDIF
-  
+    
+    
+    IF strpos(STRUPCASE(ev),"CHANGE_COMPS_") ne -1 then begin
+      mode=strmid(STRUPCASE(ev),13,2)
+            ;help,fit_results_maps
+      
+      CASE mode of
+      '12': KS_CHANGE_COMPS, curprofman_pix.x, curprofman_pix.y, 0, 1
+      '13': KS_CHANGE_COMPS, curprofman_pix.x, curprofman_pix.y, 0, 2
+      '23': KS_CHANGE_COMPS, curprofman_pix.x, curprofman_pix.y, 1, 2
+      ELSE:
+      ENDCASE
+      
+      KS_SHIFTED_COMP_MAPS, fit_results_maps, curprofman_pix.x, curprofman_pix.y
+      KS_CURPROFMAN_SHOW_PROF
+      return
+    ENDIF
+    
+    
   IF strpos(STRUPCASE(ev),"NAVI_") ne -1 then begin
    mode=strmid(STRUPCASE(ev),5,2)
    x=curprofman_pix.x
@@ -930,6 +997,13 @@ PRO KS_CURPROF_FIT_MANAGER
   lab=WIDGET_LABEL(ks_curprofman_profandcomp_b,val="Note: Params. of axes and inst. contour will be taken from ANALYSIS menu!", font=titfont)
   
   
+  tmp_b=WIDGET_BASE(ks_curprofman_setup_b,/col,/frame)
+  lab=WIDGET_LABEL(tmp_b,val="Change components numbers:",font=titfont)
+  tmp_b1=WIDGET_BASE(tmp_b,/row)
+  ks_curprofman_change_12=WIDGET_BUTTON(tmp_b,value='1 and 2',uvalue="CHANGE_COMPS_12", xs=40)
+  ks_curprofman_change_13=WIDGET_BUTTON(tmp_b,value='1 and 3',uvalue="CHANGE_COMPS_13", xs=40)
+  ks_curprofman_change_23=WIDGET_BUTTON(tmp_b,value='2 and 3',uvalue="CHANGE_COMPS_23", xs=40)
+  
   tmp_b=WIDGET_BASE(ks_curprofman_setup_b,/col,ys=50)
   ks_curprofman_navi_b=WIDGET_BASE(ks_curprofman_setup_b,/row,/frame)
   ks_curprofman_navi_curpos_b=WIDGET_BASE(ks_curprofman_navi_b,/col)
@@ -1035,7 +1109,7 @@ PRO KS_CURPROF_FIT_MANAGER
     i0=bb*4+2
     output=lonarr(1)
     for i=i0,i0+3 do begin
-      KS_Monitor_Cre,tmp,ks_curprofman_monitors[i].name,output,/row,xs=[80,sz[4].y+10];,ys=[10,10]
+      KS_Monitor_Cre,tmp,ks_curprofman_monitors[i].name,output,/row,xs=[80,sz[4].y+20];,ys=[10,10]
       ks_curprofman_monitors[i].obj=output
     endfor
   ENDFOR

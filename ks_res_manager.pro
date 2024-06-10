@@ -92,8 +92,14 @@ END
 
 function KS_sxpar, par, name
   ; Считываем параметр из лога
-  cur_ind= WHERE(STRMATCH(par, "*"+name+"*", /FOLD_CASE) EQ 1) 
-  cur=par[cur_ind[0]]
+  curpar=par
+  for i=0,n_elements(curpar)-1 do begin
+    v1 = STRSPLIT(curpar[i], "( /)", /regex, /EXTRACT)
+    curpar[i]=v1[0]
+  endfor
+  cur_ind= WHERE(STRMATCH(curpar, "*"+name+"*", /FOLD_CASE) EQ 1, nr)
+  if  nr eq 0 then return,''
+  cur=curpar[cur_ind[0]]
   v1 = STRSPLIT(cur, '=', /EXTRACT)
   v2= STRSPLIT(v1[1], "'", /EXTRACT)
   res=v2[1]
@@ -266,9 +272,9 @@ pro KS_RES_MANAGER_EVENT, event
       n_indexes=n_elements(res_modes[*])
       indexes=indgen(n_indexes)
     endif
-    stack_keywords=["FLUX_TOT","FLUX_C  ","FLUX_B  ","FLUX_R  ","INTENS_C","INTENS_B","INTENS_R","VELO_C  ","VELO_B  ","VELO_R  ","VELO_SHI",$
-    "DISP_C  ","DISP_B  ","DISP_R  ","MOMENT_0","MOMENT_1","MOMENT_2","MOMENT_3","MOMENT_4","SN_RATIO","CONTIN  ","RESID_MP","MOD_CENT","MOD_BLUE","MOD_RED ","MOD_RES "]
-    stack_fsuff=["fl_tot","fl_c","fl_b","fl_r","int_c","int_b","int_r","vel_c","vel_b","vel_r","vel_shi","disp_c","disp_b","disp_r",$
+    stack_keywords=["FLUX_TOT","FLUX_C  ","FLUX_B  ","FLUX_R  ","FLUX_SHI","INTENS_C","INTENS_B","INTENS_R","INT_SHI ","VELO_C  ","VELO_B  ","VELO_R  ","VELO_SHI","VDIF_MAP",$
+    "DISP_C  ","DISP_B  ","DISP_R  ","DISP_SHI","MOMENT_0","MOMENT_1","MOMENT_2","MOMENT_3","MOMENT_4","SN_RATIO","CONTIN  ","RESID_MP","MOD_CENT","MOD_BLUE","MOD_RED ","MOD_RES "]
+    stack_fsuff=["fl_tot","fl_c","fl_b","fl_r","fl_shi","int_c","int_b","int_r","int_shi","vel_c","vel_b","vel_r","vel_shi","vel_diffmap","disp_c","disp_b","disp_r","disp_shi",$
                       "mom0","mom1","mom2","mom3","mom4","snr","cont","resid","model_c","model_b","model_r","model_resid"]
   endif
   
@@ -430,7 +436,7 @@ pro KS_RES_MANAGER_EVENT, event
       sub_mode=strmid(ev,7,3)
       sub_type=fix(strmid(ev,11,1))
       possible_start=intarr(7)
-      possible_nums=[4,3,4,3,5,3,4]
+      possible_nums=[5,4,5,4,5,3,4]
       for i=1,6 do possible_start[i]=total(possible_nums[0:i-1])
       if sub_type eq 0 then indexes=indgen(total(possible_nums)) else indexes=indgen(possible_nums[sub_type-1])+possible_start[sub_type-1]
       IF sub_mode eq 'all' then val=1
@@ -498,16 +504,20 @@ PRO KS_RES_MANAGER
              {obj_wstat_par,'Central comp.','mode_select',0,0,0,1, "Cent. Comp. Flux"},$ ;FLUX
              {obj_wstat_par,'Blue comp.','mode_select',0,0,0,1, "Blue Comp. Flux"},$ ;FLUX
              {obj_wstat_par,'Red comp.','mode_select',0,0,0,1, "Red Comp. Flux"},$ ;FLUX
+             {obj_wstat_par,'Shifted comp.','mode_select',0,0,0,1, "Shifted Comp. Flux"},$ ;FLUX
              {obj_wstat_par,'Central comp.','mode_select',0,0,0,1, "Cent. Comp. Intens."},$ ;Intens
              {obj_wstat_par,'Blue comp.','mode_select',0,0,0,1,"Blue Comp. Intens."},$ ;Intens
              {obj_wstat_par,'Red comp.','mode_select',0,0,0,1,"Red Comp. Intens."},$ ;Intens
+             {obj_wstat_par,'Shifted comp.','mode_select',0,0,0,1,"Shifted Comp. Intens."},$ ;Intens
              {obj_wstat_par,'Central comp.','mode_select',0,0,0,1,"Cent. Comp. Velocity"},$ ;Velocity
              {obj_wstat_par,'Blue comp.','mode_select',0,0,0,1,"Blue Comp. Velocity"},$ ;Velocity
              {obj_wstat_par,'Red comp.','mode_select',0,0,0,1,"Red Comp. Velocity"},$ ;Velocity
-             {obj_wstat_par,'Shift map','mode_select',0,0,0,1,"Shift from cent. comp."},$ ;Velocity
+             {obj_wstat_par,'Shifted comp.','mode_select',0,0,0,1,"Shifted Comp. Velocity"},$ ;Velocity
+             {obj_wstat_par,'Difference map','mode_select',0,0,0,1,"Map of vel. differences"},$ ;Velocity
              {obj_wstat_par,'Central comp.','mode_select',0,0,0,1,"Cent. Comp. Dispersion"},$ ;Dispersion
              {obj_wstat_par,'Blue comp.','mode_select',0,0,0,1,"Blue Comp. Dispersion"},$ ;Dispersion
              {obj_wstat_par,'Red comp.','mode_select',0,0,0,1,"Red Comp. Dispersion"},$ ;Dispersion
+             {obj_wstat_par,'Shifted comp.','mode_select',0,0,0,1,"Shifted Comp. Dispersion"},$ ;Dispersion
              {obj_wstat_par,'MOM0: Flux','mode_select',0,0,0,1,'MOM0: Flux'},$ ;Moments
              {obj_wstat_par,'MOM1: Velocity','mode_select',0,0,0,1,'MOM1: Velocity'},$ ;Moments
              {obj_wstat_par,'MOM2: Dispers.','mode_select',0,0,0,1,'MOM2: Dispersion'},$ ;Moments
@@ -528,7 +538,7 @@ PRO KS_RES_MANAGER
     KS_Buttons_Cre,tmp2_base,res_modes_buts[bst:bst+1].name,res_modes_buts[bst:bst+1].uval,output,sens=res_modes_buts[bst:bst+1].sens,xs=sz[2].x/2,ys=sz[2].y
     res_modes_buts[bst:bst+1].obj=output
     start=0
-    num=4
+    num=5
     output=lonarr(n_elements(res_modes[start:start+num-1]))
     KS_Buttons_Cre,tmp_base,res_modes[start:start+num-1].name,res_modes[start:start+num-1].uval,output,sens=res_modes[start:start+num-1].sens,/nonexclusive,$
                    /cre_stat,status=status
@@ -543,7 +553,7 @@ PRO KS_RES_MANAGER
     KS_Buttons_Cre,tmp2_base,res_modes_buts[bst:bst+1].name,res_modes_buts[bst:bst+1].uval,output,sens=res_modes_buts[bst:bst+1].sens,xs=sz[2].x/2,ys=sz[2].y
     res_modes_buts[bst:bst+1].obj=output
     start+=num
-    num=3
+    num=4
     output=lonarr(n_elements(res_modes[start:start+num-1]))
     KS_Buttons_Cre,tmp_base,res_modes[start:start+num-1].name,res_modes[start:start+num-1].uval,output,sens=res_modes[start:start+num-1].sens,/nonexclusive,$
                    /cre_stat,status=status
@@ -558,7 +568,7 @@ PRO KS_RES_MANAGER
     KS_Buttons_Cre,tmp2_base,res_modes_buts[bst:bst+1].name,res_modes_buts[bst:bst+1].uval,output,sens=res_modes_buts[bst:bst+1].sens,xs=sz[2].x/2,ys=sz[2].y
     res_modes_buts[bst:bst+1].obj=output
     start+=num
-    num=4
+    num=5
     output=lonarr(n_elements(res_modes[start:start+num-1]))
     KS_Buttons_Cre,tmp_base,res_modes[start:start+num-1].name,res_modes[start:start+num-1].uval,output,sens=res_modes[start:start+num-1].sens,/nonexclusive,$
                    /cre_stat,status=status
@@ -572,7 +582,7 @@ PRO KS_RES_MANAGER
     KS_Buttons_Cre,tmp2_base,res_modes_buts[bst:bst+1].name,res_modes_buts[bst:bst+1].uval,output,sens=res_modes_buts[bst:bst+1].sens,xs=sz[2].x/2,ys=sz[2].y
     res_modes_buts[bst:bst+1].obj=output
     start+=num
-    num=3
+    num=4
     output=lonarr(n_elements(res_modes[start:start+num-1]))
     KS_Buttons_Cre,tmp_base,res_modes[start:start+num-1].name,res_modes[start:start+num-1].uval,output,sens=res_modes[start:start+num-1].sens,/nonexclusive,$
                    /cre_stat,status=status

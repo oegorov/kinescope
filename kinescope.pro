@@ -2,23 +2,30 @@ PRO KS_DEF
     COMMON KS_SIZES, sz
     COMMON KS_WIDGET_ELEMENTS, buttons, ks_mb, ks_file_info, ks_vm_res_b, ks_vm_cub_b, ks_st_cub_b, ks_st_res_b,$
                                field_brtmax, field_brtmin, field_brtfrac, field_channels,field_channels_obj, $
-                               field_brtmax_obj, field_brtmin_obj, field_brtfrac_obj, but_auto_brt, chan_string_cur, $
+                               field_brtmax_obj, field_brtmin_obj, field_brtfrac_obj, but_auto_brt, field_xrange_obj, field_xrange, chan_string_cur, $
                                monitors, ks_sml_b, ks_smr_b, ks_shape_b, field_zoom_cub_obj,field_zoom_cub,state_monitor,$
                                field_zoom_res_obj,field_zoom_res, but_curprof_monitor, list_of_restypes,field_snr_mask,field_snr_mask_obj
                                 
     COMMON KS_DISPLAY, ks_cube_disp, ks_res_disp, pos_on_disp,  cur_channel, cur_im, h_cur_im, cur_res, h_cur_res, $
                        cur_res_index,cur_res_name, xscr_cur, yscr_cur, mode_view, show_type, start_draw_bord, bord_draw,clone_wID, $
                        selection_mode, selection_shape, zoom_border, zoom_factor, markers, color_tab, curprof_monitor, snr_mask,$
-                       clone_parallel_res_ID,clone_parallel_cub_ID, curprof_selection
+                       clone_parallel_res_ID,clone_parallel_cub_ID, curprof_selection, prof_xrange
     COMMON KS_DATA, file_cub, header_cub, cub, cub_2d, header_cub_2d, image, header_image, filenames, axes_info, $
-                    extern_disp, inst_fwhm
-    COMMON KS_FLAGS_AND_PARAMS, cub_loaded, im_loaded, res_loaded, num_res_subtypes
+                    extern_disp, inst_fwhm, binmap, header_binmap
+    COMMON KS_FLAGS_AND_PARAMS, cub_loaded, im_loaded, res_loaded, num_res_subtypes, binmap_loaded
     COMMON KS_BRIGHTNESS, brtmin, brtmax, brtfrac, auto_br
-    COMMON KS_ANALYSIS, cur_fit_selection, moms_on_fly, n_fitpoints, fit_results_maps,  $
+    COMMON KS_ANALYSIS, cur_fit_selection, moms_on_fly, n_fitpoints, fit_results_maps, ks_analysis_limiter, ks_analysis_sortmode, $
                         fit_results_model, fit_pixels,fit_overwrite, fit_proftype, fit_method, min_maps_points, map_tags, mod_tags
     COMMON KS_RES_MANAGER_WIDGET, ks_resman_b, resman_buttons, res_modes
     COMMON KS_ANAL_MANAGER_WIDGET, ks_anal_b, anal_buttons, an_infomessage, ks_an_info_label,wid_ax_info, wid_inst_fwhm,$
-                                   fit_proftype_but, fit_method_but, wid_extern_disp
+                                   fit_proftype_but, fit_method_but, wid_extern_disp,fit_setcent_but,$
+                                    ks_simplify_thresh,fit_simplify_but,fit_uselimits_but,fit_complimits_but,ks_table_lims_profcomp,$
+                          ks_anlim_comp3_asetmax,ks_anlim_comp3_asetmin,ks_anlim_comp3_fsetmax,ks_anlim_comp3_fsetmin,ks_anlim_comp3_csetmax,ks_anlim_comp3_csetmin,$
+                          ks_anlim_comp2_asetmax,ks_anlim_comp2_asetmin,ks_anlim_comp2_fsetmax,ks_anlim_comp2_fsetmin,ks_anlim_comp2_csetmax,ks_anlim_comp2_csetmin,$
+                          ks_anlim_comp1_asetmax,ks_anlim_comp1_asetmin,ks_anlim_comp1_fsetmax,ks_anlim_comp1_fsetmin,ks_anlim_comp1_csetmax,ks_anlim_comp1_csetmin,$
+                          ks_anlim_comp3_amax,ks_anlim_comp3_amin,ks_anlim_comp3_fmax,ks_anlim_comp3_fmin,ks_anlim_comp3_cmax,ks_anlim_comp3_cmin,$
+                          ks_anlim_comp2_amax,ks_anlim_comp2_amin,ks_anlim_comp2_fmax,ks_anlim_comp2_fmin,ks_anlim_comp2_cmax,ks_anlim_comp2_cmin,$
+                          ks_anlim_comp1_amax,ks_anlim_comp1_amin,ks_anlim_comp1_fmax,ks_anlim_comp1_fmin,ks_anlim_comp1_cmax,ks_anlim_comp1_cmin
     COMMON KS_PROF_MANAGER, ks_profman_b, profman_buttons, ks_table_prof, ks_table_profcomp,ks_prof_disp, prof_default, prof_storage, n_prof_table, prof_selected,$
                           profile_selection, n_prof_options, ks_profman_method_but, ks_profman_method,ks_profman_setcomp1,ks_profman_setcomp2,ks_profman_setcomp3,$ 
                           ks_profman_comp3_asetmax,ks_profman_comp3_asetmin,ks_profman_comp3_amin,ks_profman_comp3_amax,ks_profman_comp3_afix,ks_profman_comp3_a,$
@@ -31,7 +38,7 @@ PRO KS_DEF
                           ks_profman_comp2_csetmax,ks_profman_comp2_csetmin,ks_profman_comp2_cmin,ks_profman_comp2_cmax,ks_profman_comp2_cfix,ks_profman_comp2_c,$
                           ks_profman_comp1_csetmax,ks_profman_comp1_csetmin,ks_profman_comp1_cmin,ks_profman_comp1_cmax,ks_profman_comp1_cfix,ks_profman_comp1_c,$
                           proftab_edit, ks_profman_contsetmin, ks_profman_contsetmax, ks_profman_contmin, ks_profman_contmax, ks_profman_cont, ks_profman_contfix,$
-                          ks_prof_showres,ks_profman_monitors,ks_profman_pos_on_disp
+                          ks_prof_showres,ks_profman_monitors,ks_profman_pos_on_disp, ks_profman_xrange, ks_profman_field_xrange_obj,ks_profman_field_xrange
                           
     COMMON KS_CURPROF_MANAGER, ks_curprofman_b, curprofman_buttons, ks_table_curprofcomp,ks_curprof_disp, curprofman_pix, ks_curprofman_inicomps, $
                           n_curprof_options, ks_curprofman_method_but, ks_curprofman_method,ks_curprofman_setcomp1,ks_curprofman_setcomp2,ks_curprofman_setcomp3,$ 
@@ -47,6 +54,10 @@ PRO KS_DEF
                           curproftab_edit, ks_curprofman_contsetmin, ks_curprofman_contsetmax, ks_curprofman_contmin, ks_curprofman_contmax, ks_curprofman_cont, ks_curprofman_contfix,$
                           ks_curprof_showres,ks_curprofman_monitors,ks_curprofman_pos_on_disp,ks_curprofman_curpos, ks_curprofman_navi_lt,ks_curprofman_navi_rt,ks_curprofman_navi_up,$
                           ks_curprofman_navi_dn                      
+    
+    
+    COMMON KS_PV_DIAG_MANAGER, ks_pvman_b,pvman_buttons, ks_table_pv
+    
                           
     COMMON KS_FOR_MPFIT, current_method, inst_fwhm_vel
     
@@ -66,13 +77,15 @@ PRO KS_DEF
    ; Флаги и начальные значения
    cub_loaded=0
    im_loaded=0 
-   num_res_subtypes = [4,3,4,3,5,1,1,1]; количество подтипов в каждом типе отображаемого результата (напр., Поток => 1,2,3 комп.) 
+   binmap_loaded=0
+   num_res_subtypes = [5,4,5,4,5,1,1,1]; количество подтипов в каждом типе отображаемого результата (напр., Поток => 1,2,3 комп.) 
    list_of_restypes = ['Flux','Intensity','Velocity','Dispersion','Moments','S/N ratio','Continuum','Residuals']
    
    ;Tag names for results
-   map_tags=strupcase(['f_tot','f1','f2','f3','i1','i2','i3','v1','v2','v3','v_shift','sigma1','sigma2','sigma3','mom0','mom1','mom2','mom3','mom4','snr','contin','resid'])
+    map_tags=strupcase(['f_tot','f1','f2','f3','f_shi_cmp','i1','i2','i3','i_shi_cmp','v1','v2','v3','v_shi_cmp','v_shift','sigma1','sigma2','sigma3','sigma_shi_cmp','mom0','mom1','mom2','mom3','mom4','snr','contin','resid'])
    mod_tags=strupcase(['c1','c2','c3','resid'])
    
+
    res_loaded=intarr(total(num_res_subtypes))
    min_maps_points = 10 ; минимальное число профитированных точек, чтобы отображать карты
     
@@ -120,6 +133,9 @@ PRO KS_DEF
    brtmax=fltarr(n_restype+3)
    brtfrac=fltarr(n_restype+3)+97.
    
+   ;--- Диапазон по X для профиля
+   prof_xrange=fltarr(2)
+   ks_profman_xrange=fltarr(2)
    snr_mask=10. ; Минимальное значение сигнал/шум. Все что ниже - маскируется 
     
    auto_br=fltarr(2)+1 
@@ -135,7 +151,7 @@ PRO KS_DEF
    fit_overwrite=1 ; Можно ли перезаписывать результаты фиттинга
    fit_method = 0 ; 0  - MPFIT, 1 - GENFIT
    fit_proftype = 0 ; 0  - Voigt, 1 - Gauss
-   
+   ks_analysis_sortmode = 0 ; set cent.comp (in case of 2) by : 0 - intensity; 1 - offset from Mom1; 2 - fwhm
    clone_parallel_cub_ID=-1
    clone_parallel_res_ID=-1
    
@@ -147,33 +163,33 @@ PRO KS_DEF
    n_prof_options=7
    proftab_edit={state:0L,prof:0L}
    
-    prof_default={ks_prof_struct,name:'',color:'', y:ptr_new(), x:ptr_new(),xr:ptr_new(),yr:ptr_new(), comps:ptr_new(), cent:ptr_new(), snr:0E, $
-        amp_norm:0L, ampl:ptr_new(), fwhm:ptr_new(), fixcent:ptr_new(),fixfwhm:ptr_new(),fixampl:ptr_new(),cont:0E,fixcont:0L,setmin_cont:0L,$
-        setmax_cont:0L,min_cont:0E,max_cont:0E,link_ampl:ptr_new(),link_cent:ptr_new(),link_fwhm:ptr_new(),$
+    prof_default={ks_prof_struct,name:'',color:'', y:ptr_new(), x:ptr_new(),xr:ptr_new(),yr:ptr_new(), comps:ptr_new(), cent:ptr_new(), snr:0D, $
+        amp_norm:0L, ampl:ptr_new(), fwhm:ptr_new(), fixcent:ptr_new(),fixfwhm:ptr_new(),fixampl:ptr_new(),cont:0D,fixcont:0L,setmin_cont:0L,$
+        setmax_cont:0L,min_cont:0E,max_cont:0E,link_ampl:ptr_new(),link_cent:ptr_new(),link_fwhm:ptr_new(),mom0:0D,mom1:0D,mom2:0D,mom3:0D,mom4:0D,$
         setmin_cent:ptr_new(),setmin_fwhm:ptr_new(),setmin_ampl:ptr_new(),setmax_cent:ptr_new(),setmax_fwhm:ptr_new(),setmax_ampl:ptr_new(),$
-        min_cent:ptr_new(),min_fwhm:ptr_new(),min_ampl:ptr_new(),max_cent:ptr_new(),max_fwhm:ptr_new(),max_ampl:ptr_new(),fitted_comps:ptr_new(),asymmetry:0E,$
-        fitted_ampl:ptr_new(),fitted_cent:ptr_new(),fitted_fwhm:ptr_new(),fitted_flux:ptr_new(),fitted_cont:0E,fitted_isset:ptr_new(), fitted_resid:ptr_new(), show_on: ptr_new()}
+        min_cent:ptr_new(),min_fwhm:ptr_new(),min_ampl:ptr_new(),max_cent:ptr_new(),max_fwhm:ptr_new(),max_ampl:ptr_new(),fitted_comps:ptr_new(),$
+        fitted_ampl:ptr_new(),fitted_cent:ptr_new(),fitted_fwhm:ptr_new(),fitted_flux:ptr_new(),fitted_cont:0D,fitted_isset:ptr_new(), fitted_resid:ptr_new(), show_on: ptr_new()}
       
     prof_default.x=ptr_new([0])
     prof_default.y=ptr_new([0])
     prof_default.xr=ptr_new([0.,0.])
     prof_default.yr=ptr_new([0.,0.])
-    prof_default.cent=ptr_new([0.,30.,-30.])
-    prof_default.fwhm=ptr_new([25.,25.,25.])
-    prof_default.ampl=ptr_new([1.,0.4,0.4])
-    prof_default.cont=0.
+    prof_default.cent=ptr_new(double([0.,30.,-30.]))
+    prof_default.fwhm=ptr_new(double([25.,25.,25.]))
+    prof_default.ampl=ptr_new(double([1.,0.4,0.4]))
+    prof_default.cont=0.D
     prof_default.amp_norm=1 
     prof_default.comps=ptr_new([1,0,0])
      
-    prof_default.min_cent=ptr_new([-1000.,-1000.,-1000.])
-    prof_default.min_fwhm=ptr_new([0.,0.,0.])
-    prof_default.min_ampl=ptr_new([0.,0.,0.])
-    prof_default.min_cont=0.
+    prof_default.min_cent=ptr_new(double([-1000.,-1000.,-1000.]))
+    prof_default.min_fwhm=ptr_new(double([0.,0.,0.]))
+    prof_default.min_ampl=ptr_new(double([0.,0.,0.]))
+    prof_default.min_cont=0.D
       
-    prof_default.max_cent=ptr_new([1000.,1000.,1000.])
-    prof_default.max_fwhm=ptr_new([120.,120.,120.])
-    prof_default.max_ampl=ptr_new([1.,1.,1.])
-    prof_default.max_cont=0.
+    prof_default.max_cent=ptr_new(double([1000.,1000.,1000.]))
+    prof_default.max_fwhm=ptr_new(double([120.,120.,120.]))
+    prof_default.max_ampl=ptr_new(double([1.,1.,1.]))
+    prof_default.max_cont=0.D
       
     prof_default.setmin_cent=ptr_new([0,0,0])
     prof_default.setmin_fwhm=ptr_new([0,0,0])
@@ -194,14 +210,14 @@ PRO KS_DEF
     prof_default.link_fwhm=ptr_new([0.,0.,0.])
     prof_default.link_ampl=ptr_new([0.,0.,0.])
     
-    prof_default.fitted_cent=ptr_new([0.,0.,0.])
-    prof_default.fitted_fwhm=ptr_new([0.,0.,0.])
-    prof_default.fitted_ampl=ptr_new([0.,0.,0.])
-    prof_default.fitted_flux=ptr_new([0.,0.,0.])
+    prof_default.fitted_cent=ptr_new(double([0.,0.,0.]))
+    prof_default.fitted_fwhm=ptr_new(double([0.,0.,0.]))
+    prof_default.fitted_ampl=ptr_new(double([0.,0.,0.]))
+    prof_default.fitted_flux=ptr_new(double([0.,0.,0.]))
     prof_default.fitted_isset=ptr_new([0,0,0])
     prof_default.fitted_resid=ptr_new([0])
-    prof_default.fitted_comps=ptr_new(fltarr(3,1))
-    prof_default.fitted_cont=0.
+    prof_default.fitted_comps=ptr_new(dblarr(3,1))
+    prof_default.fitted_cont=0.D
     prof_default.show_on=ptr_new([1,0,1,1,1,1])
     
    
@@ -211,19 +227,36 @@ PRO KS_DEF
    
    ;Current Profiles
    ks_curprofman_method=0
-   ks_curprofman_inicomps={prof_ini_setup, ampl: [0E,0E,0E], fwhm: [0E,0E,0E], cent: [0E,0E,0E], comps: intarr(3), setmin_ampl: intarr(3), $ 
+   ks_curprofman_inicomps={prof_ini_setup, ampl: dblarr(3), fwhm: dblarr(3), cent: dblarr(3), comps: intarr(3), setmin_ampl: intarr(3), $ 
                             setmax_ampl: intarr(3), setmin_cent: intarr(3), setmax_cent:intarr(3), setmin_fwhm:intarr(3), setmax_fwhm:intarr(3),$
-                            fix_ampl:intarr(3), fix_cent: intarr(3), fix_fwhm: intarr(3), min_cent: fltarr(3), max_cent: fltarr(3), $
-                            min_fwhm:fltarr(3),max_fwhm:fltarr(3), min_ampl:fltarr(3),max_ampl:fltarr(3),cont:0E,setmin_cont:0L,setmax_cont:0L,fix_cont:0L,$
-                            min_cont:0E,max_cont:0E, xr:fltarr(2), yr: fltarr(2)}
+                            fix_ampl:intarr(3), fix_cent: intarr(3), fix_fwhm: intarr(3), min_cent: dblarr(3), max_cent: dblarr(3), $
+                            min_fwhm:dblarr(3),max_fwhm:dblarr(3), min_ampl:dblarr(3),max_ampl:dblarr(3),cont:0.D,setmin_cont:0L,setmax_cont:0L,fix_cont:0L,$
+                            min_cont:0.D,max_cont:0.D, xr:fltarr(2), yr: fltarr(2)}
     
-   ks_curprofman_inicomps.max_ampl=[1.E,1.E,1.E]
-   ks_curprofman_inicomps.min_ampl=[0.05E,0.05E,0.05E]
-   ks_curprofman_inicomps.max_cent=[1000.,1000.,1000.]
-   ks_curprofman_inicomps.min_cent=[-1000.,-1000.,-1000.]
-   ks_curprofman_inicomps.max_fwhm=[120.,120.,120.]
-   ks_curprofman_inicomps.min_fwhm=[10.,10.,10.]
+   ks_curprofman_inicomps.max_ampl=Double([1.D,1.D,1.D])
+   ks_curprofman_inicomps.min_ampl=Double([0.05D,0.05D,0.05D])
+   ks_curprofman_inicomps.max_cent=Double([1000.,1000.,1000.])
+   ks_curprofman_inicomps.min_cent=Double([-1000.,-1000.,-1000.])
+   ks_curprofman_inicomps.max_fwhm=Double([120.,120.,120.])
+   ks_curprofman_inicomps.min_fwhm=Double([10.,10.,10.])
    ks_curprofman_inicomps.comps=[1,1,1]
+   
+   
+   
+   ; Пределы для фиттинга
+   
+   ks_analysis_limiter={lim:0L,ncomps_max:0L, setmin_cent:intarr(3),setmin_fwhm:intarr(3),setmin_ampl:intarr(3),setmax_cent:intarr(3),$
+    setmax_fwhm:intarr(3),setmax_ampl:intarr(3),min_cent:dblarr(3),min_fwhm:dblarr(3),$
+    min_ampl:dblarr(3),max_cent:dblarr(3),max_fwhm:dblarr(3),max_ampl:dblarr(3), resid_thresh:0E, simplify: 0L}
+   
+   ks_analysis_limiter.max_cent=Double([1000.,1000.,1000.])
+   ks_analysis_limiter.min_cent=Double([-1000.,-1000.,-1000.])
+   ks_analysis_limiter.max_fwhm=Double([120.,120.,120.])
+   ks_analysis_limiter.min_fwhm=Double([0.,0.,0.])
+   ks_analysis_limiter.max_ampl=Double([1.E,1.E,1.E])
+   ks_analysis_limiter.min_ampl=Double([0.01E,0.01E,0.01E])
+   ks_analysis_limiter.ncomps_max=3
+   ks_analysis_limiter.resid_thresh=3.
    
 END
 
@@ -297,21 +330,8 @@ END
            imshow=current_image
            hshow=current_head
         endif else begin
-;           adxy,current_head,zoom_border[type].x0,zoom_border[type].y0,x0,y0
-;           adxy,current_head,zoom_border[type].x1,zoom_border[type].y1,x1,y1
-
-;; For SE
-;adxy,current_head,15*ten([08,19,33]),ten([70,41,33]),x0,y0           
-;adxy,current_head,15*ten([08,19,16]),ten([70,42,39]),x1,y1
-
-;; For EN
-;adxy,current_head,15*ten([08,19,20]),ten([70,44,45]),x0,y0           
-;adxy,current_head,15*ten([08,19,02.17]),ten([70,46,08]),x1,y1
-
-;; For ENE
-adxy,current_head,15*ten([08,19,47]),ten([70,43,44.2]),x0,y0           
-adxy,current_head,15*ten([08,19,37]),ten([70,44,22]),x1,y1
-
+           adxy,current_head,zoom_border[type].x0,zoom_border[type].y0,x0,y0
+           adxy,current_head,zoom_border[type].x1,zoom_border[type].y1,x1,y1
 
            xind=get_num(nx,ny,/x)
            yind=get_num(nx,ny,/y)
@@ -333,17 +353,17 @@ adxy,current_head,15*ten([08,19,37]),ten([70,44,22]),x1,y1
           fdecomp,file,disk,psfile_dir,psfile_name,qual
           if (psfile_name eq '') then return
           cd,disk+psfile_dir
-        ps_start,file,/encaps,/quiet       
+        cgps_open,file,/encaps,/quiet       
         cgimage,imshow,minval=minval,maxval=maxval,$
                     /keep_asp,oposition=opos,pos=pos,$
                     xrange=xrange,yrange=yrange,palette=pallete,MISSING_VAL="NAN",MISSING_IND=0,MISSING_COLOR="white";,/axes,axkey={xst:5,yst:5}
         KS_SHOW_MARKERS, current_head
         imcontour,imshow,hshow,xminor=2,yminor=2,/normal,/nodata,charsize=1.,/noerase,type=1,$
                     xtit='RA (2000)',ytit='DEC (2000)',subtit=" ",pos=opos
-;        IF (minval ne maxval) then $
-;          cgcolorbar,pos=[opos[0],opos[3]+0.01,opos[2],opos[3]+0.05],range=[minval,maxval],/norm,/top,$
-;          palette=pallete,title=title,charsize=1.
-        ps_end
+        IF (minval ne maxval) then $
+          cgcolorbar,pos=[opos[0],opos[3]+0.01,opos[2],opos[3]+0.05],range=[minval,maxval],/norm,/top,$
+          palette=pallete,title=title,charsize=1.
+        cgps_close
     
   END  
 
@@ -400,6 +420,7 @@ PRO KS_GET_CUB_UNITS
   if not keyword_set(unit) then axes_info.I = "counts" else axes_info.I = unit 
   zunit=sxpar(header_cub,"CTYPE3")
   xdelt=sxpar(header_cub,"CDELT3")
+  if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
   if strpos(zunit,"WAV") ne -1 then begin
     if abs(xdelt) lt 1 and abs(xdelt) gt 0.1  then axes_info.ztype=2 else axes_info.ztype=3
   endif    
@@ -500,9 +521,9 @@ FUNCTION KS_GET_NLINES, moments_struct
        if nr gt 0 and got eq 0 then begin
           
           dir_moms="/Users/mors/Science/IDLWorkspace/KINESCOPE/moments/"
-          m3_m4_1=readfits(dir_moms+"m3_m4_1comp.fits",h11)
-          m3_m4_2=readfits(dir_moms+"m3_m4_2comp.fits",h12)
-          m3_m4_3=readfits(dir_moms+"m3_m4_3comp.fits",h13)
+          m3_m4_1=readfits(dir_moms+"m3_m4_1comp.fits",h11,/sil)
+          m3_m4_2=readfits(dir_moms+"m3_m4_2comp.fits",h12,/sil)
+          m3_m4_3=readfits(dir_moms+"m3_m4_3comp.fits",h13,/sil)
           m3_ax=findgen(sxpar(h11,"NAXIS1"))*sxpar(h11,"CDELT1")+sxpar(h11,"CRVAL1")
           m4_ax=findgen(sxpar(h11,"NAXIS2"))*sxpar(h11,"CDELT2")+sxpar(h11,"CRVAL2")
         
@@ -531,7 +552,7 @@ function KS_moments,x_in,y_in,contin=contin, snr=snr,iter_done=iter_done
   
   contin=0.
   snr=0.
-  moms=fltarr(5)
+  moms=dblarr(5)
   
   ; вычищаем все, что имеет значения Nan или 0
   nz = n_elements(x_in)
@@ -541,8 +562,7 @@ function KS_moments,x_in,y_in,contin=contin, snr=snr,iter_done=iter_done
   Y=Y_in[REC]
   nz = n_elements(x)
   ; Нормируем спектр, предполагая уровень континуума - минимум. Отбрасываем все, что ниже 5%
-  ; Второй итерацией уже используем посчитанный уровень континуума в точках за пределами 3sigma от центра линии
-  
+  ; Второй итерацией уже используем посчитанный уровень континуума и шума в точках за пределами 3sigma от центра линии
   
   contin=min(y,/nan)
   intens=max(y,/nan)-contin
@@ -550,28 +570,33 @@ function KS_moments,x_in,y_in,contin=contin, snr=snr,iter_done=iter_done
   iter_done=0
   FOR iter=0,1 do begin
     yn=(y-contin)/intens
-    if iter eq 1 then use=where(y-contin gt 3*intens/snr, nuse) else use=where(yn gt 0.25, nuse)
-    if nuse lt 5 then break 
+    if iter eq 1 then use=where(y-contin gt 3*intens/snr, nuse) else begin
+      use=where(yn gt 0.25, nuse)
+      if nuse lt 5 then begin
+        use=where(yn gt 0.15, nuse)
+        if nuse lt 5 then begin
+          use=where(yn gt 0.1, nuse)
+          if nuse lt 5 then begin
+            use=where(yn gt 0.05, nuse)
+            if nuse lt 3 then begin
+              use=where(yn ne 0.0, nuse)
+              if nuse lt 3 then break
+            endif
+          endif
+         endif
+       endif
+    endelse
+    if nuse eq 0 then break
     yn=yn[use]
     xuse=x[use]
     
-    if iter eq 0 then norm_factor=100 else norm_factor=(snr > 10)
-    if total(yn > 0)*norm_factor gt 1e4 then norm_factor=norm_factor/max(yn,/nan)
-    yn=yn*norm_factor
-    yn=round(yn) 
-    xdistrib=[-1]
-    for i=0L,nuse-1 do begin
-      if yn[i] le 0 then continue
-      xdistrib=[xdistrib,replicate(xuse[i],yn[i])]
-    endfor
-    npnt=n_elements(xdistrib)-1
-    if npnt lt 5 then break
-    xdistrib=xdistrib[1:npnt]
+    m1=total(xuse*yn)/total(yn)
+    m2=sqrt(total((xuse-m1)^2*yn)/total(yn))
+    m3=total((xuse-m1)^3*yn)/total(yn)/m2^3
+    m4=(total((xuse-m1)^4.*yn)/total(yn))/m2^4-3.  
     
-    tmp_moms=moment(xdistrib,/nan)
-    moms=[0,tmp_moms]
-    sigm=sqrt(moms[2])
-    moms[2]=sigm
+    moms=[0,m1,m2,m3,m4]
+    sigm=moms[2]
     moment1=moms[1]
     iter_done+=1
     if iter eq 0 then begin 
@@ -596,17 +621,25 @@ function KS_moments,x_in,y_in,contin=contin, snr=snr,iter_done=iter_done
 end
 
 
-FUNCTION KS_GET_INITIAL_COMPS, xscale, prof, moments_struct, contin
+FUNCTION KS_GET_INITIAL_COMPS, xscale, prof, moments_struct, contin, limiter=limiter, ncomps_forced=ncomps_forced
   COMMON KS_DATA
-
+    
+    if n_elements(limiter) eq 0 then do_lim=0 else begin
+      if limiter.lim eq 0 then do_lim=0 else do_lim=1
+    endelse
+    
+    
+    
     n_lines=ks_get_nlines(moments_struct)
-    n_lines=1
+    if do_lim then n_lines=(n_lines < limiter.ncomps_max)
+    if keyword_set(ncomps_forced) then n_lines=ncomps_forced
+
     ysort=prof[sort(abs(xscale-moments_struct.mom1))]
     intens=(max(ysort[0:5]))-contin
     ampl=[1.,0.2,0.2]*intens
     fw=replicate(moments_struct.mom2,3)/sqrt(n_lines)*2.35482
-    cent=[moments_struct.mom1,moments_struct.mom1+1.5*moments_struct.mom3/abs(moments_struct.mom3)*(abs(moments_struct.mom3)*sqrt(abs(moments_struct.mom2^2-inst_fwhm.vel^2))^3)^0.33,$
-    moments_struct.mom1-1.5*moments_struct.mom3/abs(moments_struct.mom3)*(abs(moments_struct.mom3)*sqrt(abs(moments_struct.mom2^2-inst_fwhm.vel^2))^3)^0.33]
+    cent=[moments_struct.mom1,moments_struct.mom1+2.5*moments_struct.mom3/abs(moments_struct.mom3)*(abs(moments_struct.mom3)*sqrt(abs(moments_struct.mom2^2-inst_fwhm.vel^2))^3)^0.33,$
+    moments_struct.mom1-2.5*moments_struct.mom3/abs(moments_struct.mom3)*(abs(moments_struct.mom3)*sqrt(abs(moments_struct.mom2^2-inst_fwhm.vel^2))^3)^0.33]
     rec=where(~finite(intens),nr)
     if nr gt 0 then intens[rec]=0
     rec=where(~finite(fw),nr)
@@ -632,7 +665,7 @@ FUNCTION KS_GET_INITIAL_COMPS, xscale, prof, moments_struct, contin
     smna=[1,1,1]
     mna=[replicate(0.,3)]
     smxa=[1,1,1]
-    mxa=[replicate(mxcnt-mncnt,3)]
+    mxa=[replicate((mxcnt-mncnt)*1.05,3)]
     
     smnc=[1,1,1]
     smxc=[1,1,1]
@@ -645,9 +678,40 @@ FUNCTION KS_GET_INITIAL_COMPS, xscale, prof, moments_struct, contin
     mnf=[replicate(23.5482/2.,3)]
     mxf=[replicate(moments_struct.mom2*2.35482*2,3)]
     
+    
+    if do_lim then begin
+      for i=0,2 do begin
+        if limiter.setmin_ampl[i] then mna[i]=(mna[i] > limiter.min_ampl[i]*(mxcnt-mncnt))
+        if limiter.setmax_ampl[i] then mxa[i]=(mxa[i] < limiter.max_ampl[i]*(mxcnt-mncnt))
+        if limiter.setmin_fwhm[i] then mnf[i]=(mnf[i] > limiter.min_fwhm[i])
+        if limiter.setmax_fwhm[i] then mxf[i]=(mxf[i] < limiter.max_fwhm[i])
+        if limiter.setmin_cent[i] then mnc[i]=(mnc[i] > limiter.min_cent[i])
+        if limiter.setmax_cent[i] then mxc[i]=(mxc[i] < limiter.max_cent[i])
+        
+        ;Проверяем, чтоб все значения теперь были в заданных границах. Если не так - берем на 3% отличающееся от крайнего
+        if smnc[i] eq 1 and cent[i] lt mnc[i] then cent[i]=mnc[i]+0.03*abs(mnc[i])
+        if smna[i] eq 1 and ampl[i] lt mna[i] then ampl[i]=mna[i]+0.03*abs(mna[i])
+        if smnf[i] eq 1 and fw[i] lt mnf[i] then fw[i]=mnf[i]+0.03*abs(mnf[i])
+        if smxc[i] eq 1 and cent[i] gt mxc[i] then cent[i]=mxc[i]-0.03*abs(mxc[i])
+        if smxa[i] eq 1 and ampl[i] gt mxa[i] then ampl[i]=mxa[i]-0.03*abs(mxa[i])
+        if smxf[i] eq 1 and fw[i] gt mxf[i] then fw[i]=mxf[i]-0.03*abs(mxf[i])
+        
+      endfor
+    ENDIF
+    
+    
     cent=double(cent)
     ampl=double(ampl)
     fw=double(fw)
+    contin=double(contin)    
+    mnc=double(mnc)
+    mxc=double(mxc)
+    mnf=double(mnf)
+    mxf=double(mxf)
+    mna=double(mna)
+    mxa=double(mxa)
+    mncnt=double(mncnt)
+    mxcnt=double(mxcnt)
     contin=double(contin)
     
     prof_ini={prf_ini_str, ampl: [ampl[0],(ampl[1:2])[s]], cent: [cent[0],(cent[1:2])[s]], comps: comps, fwhm: [fw[0],(fw[1:2])[s]], $
@@ -661,7 +725,15 @@ END
 ;#################
 
 ; ########### Вспомогательные процедуры
-
+          
+    function ks_float2str, num, decim
+      if num eq 0 then return,string(0.,format="(G0."+string(decim,format="(I0)")+")")
+      lg=alog10(abs(num))
+      if lg lt 0 then add=0 else add=floor(lg)+1
+      return ,string(num,format="(G0."+string(decim+add,format="(I0)")+")")
+    end
+          
+          
               PRO KS_STATE_MONITOR, state, done=done
                 COMMON KS_WIDGET_ELEMENTS
                 ; Мониторим прогресс. 
@@ -692,16 +764,16 @@ END
                   ; Инициализация новых структур с результатами (размерность как и у куба - nx, ny)
                   COMMON KS_ANALYSIS
                   COMMON KS_DISPLAY
-                  tmp=fltarr(nx,ny)
+                  tmp=dblarr(nx,ny)
                   tmp[*]=!Values.F_NAN
                   tmp1=intarr(nx,ny)
                   tmp1[*]=!Values.F_NAN
-                  tmp2=fltarr(nx,ny,nz)
+                  tmp2=dblarr(nx,ny,nz)
                   tmp2[*]=!Values.F_NAN
                   fit_results_maps = {f_tot:tmp, f1:tmp, i1:tmp, v1:tmp, sigma1:tmp, f2:tmp, i2:tmp, v2:tmp, sigma2:tmp,$
                                       f3:tmp, i3:tmp, v3:tmp, sigma3:tmp, v_shift:tmp, is_set1:tmp1,is_set2:tmp1,is_set3:tmp1,$
                                       flux:tmp, mom0:tmp, mom1:tmp, mom2:tmp, mom3:tmp, mom4:tmp, snr:tmp, contin:tmp, resid:tmp,$
-                                      fitted: tmp1}
+                                      fitted: tmp1, f_shi_cmp: tmp, i_shi_cmp: tmp, v_shi_cmp: tmp, sigma_shi_cmp: tmp}
                   
                   fit_results_model = {c1:tmp2, c2:tmp2, c3:tmp2, resid: tmp2}                    
                   WIDGET_CONTROL,show_type[1].obj,set_val=["None"]
@@ -731,6 +803,7 @@ END
                   WIDGET_CONTROL,buttons[9].obj,sensitive=new_state
                   WIDGET_CONTROL,buttons[10].obj,sensitive=new_state
                   WIDGET_CONTROL,buttons[12].obj,sensitive=new_state
+                  
                 END
                 
                 
@@ -1045,25 +1118,24 @@ END
                     endfor
                     if fit_selection.type eq 0 then begin  
                        ;For rectangle or free shape
+                       ;Из-за того, что мы пиксель считаем не от его центра, а от начала, 
+                       ;а программа polyfillv криво считает 0-е пиксели (видимо, сдвигая все на 1) - прибавляем 0.5
                        if total(abs(fit_reg_x-fit_reg_x[0])) gt 0 $
                           and total(abs(fit_reg_y-fit_reg_y[0])) gt 0  then $
-                          entire_reg= polyfillv(fit_reg_x,fit_reg_y,nx,ny) $
+                          entire_reg= polyfillv(fit_reg_x+0.5,fit_reg_y+0.5,nx,ny) $
                        else entire_reg=-1
                     endif
                     if fit_selection.type eq 1 then begin
                        ; For circle shape
-                            dist_circle, rad_dist, [nx,ny], (round(fit_reg_x[0]) < (nx-1)), (round(fit_reg_y[0]) < (ny-1) )
+                       ;Из-за того, что мы пиксель считаем не от его центра, а от начала, отнимаем 0.5
+                            dist_circle, rad_dist, [nx,ny], ((fit_reg_x[0]-0.5) < (nx-1)), ((fit_reg_y[0]-0.5) < (ny-1) )
                             entire_reg = where( abs(rad_dist) le sqrt((fit_reg_x[0]-fit_reg_x[1])^2+(fit_reg_y[0]-fit_reg_y[1])^2))
                     endif
                     if fit_selection.type eq 2 then begin
                        ; For point
-                       entire_reg = where(xind eq round(fit_reg_x[0]) and yind eq round(fit_reg_y[0]))
+                       entire_reg = where(xind eq floor(fit_reg_x[0]) and yind eq floor(fit_reg_y[0]))
                     endif 
                   endif else entire_reg = lindgen(nx*ny)
-;                  openw,u,"/Users/mors/Science/HoII/IFP/Optical/Moments/HI_shapepoint_low3.txt",/get_lun
-;                  for i=0l,n_elements(entire_reg)-1 do printf, u, string(entire_reg[i],format="(I0)")
-;                  close,u,/file
-;                  free_lun,u
                   return,entire_reg
                 END
                 
@@ -1124,11 +1196,19 @@ END
                   if keyword_set(head_in) then begin
                     head_out=head_in
                     sxaddpar,head_out,"NAXIS",2
+                    if sxpar(head_out,"WCSAXES") then sxaddpar,head_out,"WCSAXES",2
                     sxdelpar,head_out,"NAXIS3"
                     sxdelpar,head_out,"NAXIS4"
                     sxdelpar,head_out,"CRVAL3"
                     sxdelpar,head_out,"CRVAL4"
                     sxdelpar,head_out,"CDELT3"
+                    sxdelpar,head_out,"CD3_3"
+                    sxdelpar,head_out,"CD3_2"
+                    sxdelpar,head_out,"CD3_1"
+                    sxdelpar,head_out,"CD4_3"
+                    sxdelpar,head_out,"CD4_2"
+                    sxdelpar,head_out,"CD4_1"
+                    sxdelpar,head_out,"CD4_4"
                     sxdelpar,head_out,"CDELT4"
                     sxdelpar,head_out,"CTYPE3"
                     sxdelpar,head_out,"CTYPE4"
@@ -1203,7 +1283,6 @@ FUNCTION KS_NEW_PROFILE, old=old, nprof=nprof, insert=insert
      prof_insert[i].fitted_resid=ptr_new(*prof_default.fitted_resid)
      prof_insert[i].fitted_comps=ptr_new(*prof_default.fitted_comps)
      prof_insert[i].show_on=ptr_new(*prof_default.show_on)
-     
   ENDFOR
   
   
@@ -1216,17 +1295,18 @@ FUNCTION KS_NEW_PROFILE, old=old, nprof=nprof, insert=insert
     nz=sxpar(header_cub,"NAXIS3")
     refpix=sxpar(header_cub,"CRPIX3")
     xdelt=sxpar(header_cub,"CDELT3")
+    if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
     if refpix eq 0 then refpix=1
     xscale=(findgen(nz)-refpix+1)*xdelt+sxpar(header_cub,"CRVAL3")
     if axes_info.ztype eq 1 then xscale = xscale/1e3
-    prof=fltarr(nz)
+    prof=dblarr(nz)
     for i=0,n-1 do begin
       prof_insert[i].color=insert[i].color
       prof_insert[i].name=insert[i].name
       pixels = KS_GET_SELECTION_REGION(header_cub, insert[i])
       for j=0,nz-1 do begin
         cubslice=reform(cub[*,*,j])
-        prof[j]=total(cubslice[pixels])
+        prof[j]=double(total(cubslice[pixels]))
       endfor
       
       moments=ks_moments(xscale, prof, contin=contin, snr=snr)
@@ -1246,7 +1326,14 @@ FUNCTION KS_NEW_PROFILE, old=old, nprof=nprof, insert=insert
        prof_insert[i].cont=contin
        prof_insert[i].snr=snr
       *prof_insert[i].fitted_resid=prof
-      *prof_insert[i].fitted_comps=fltarr(3,nz)
+      *prof_insert[i].fitted_comps=dblarr(3,nz)
+      
+       prof_insert[i].mom0=moments[0]
+       prof_insert[i].mom1=moments[1]
+       prof_insert[i].mom2=moments[2]
+       prof_insert[i].mom3=moments[3]
+       prof_insert[i].mom4=moments[4]
+      
       
       *prof_insert[i].cent=ini_comps.cent
       *prof_insert[i].ampl=ini_comps.ampl
@@ -1329,48 +1416,52 @@ end
             cur_res_index=total(num_res_subtypes[0:4])+index
           end
           "Flux": begin
-            possible=["Total","Central comp.","Blue comp.", "Red comp."]
+            possible=["Total","Central comp.","Blue comp.", "Red comp.","Shift.comp."]
             index=where(possible eq cur_subtype)
             CASE index OF
               0: cur_res=fit_results_maps.f_tot
               1: cur_res=fit_results_maps.f1
               2: cur_res=fit_results_maps.f2
               3: cur_res=fit_results_maps.f3
+              4: cur_res=fit_results_maps.f_shi_cmp
             ENDCASE
             cur_res_name=cur_subtype+"  "+cur_type
             cur_res_index=index
           end
           "Intensity": begin
-            possible=["Central comp.","Blue comp.", "Red comp."]
+            possible=["Central comp.","Blue comp.", "Red comp.","Shift.comp."]
             index=where(possible eq cur_subtype)
             CASE index OF
               0: cur_res=fit_results_maps.i1
               1:  cur_res=fit_results_maps.i2
               2:  cur_res=fit_results_maps.i3
+              3: cur_res=fit_results_maps.i_shi_cmp
             ENDCASE
             cur_res_name=cur_subtype+"  "+cur_type
             cur_res_index=total(num_res_subtypes[0])+index
           end
           "Velocity": begin
-            possible=["Central comp.","Blue comp.", "Red comp.","Shift map"]
+            possible=["Central comp.","Blue comp.", "Red comp.","Shift.comp.","Diff. map"]
             index=where(possible eq cur_subtype)
             CASE index OF
               0:  cur_res=fit_results_maps.v1
               1:  cur_res=fit_results_maps.v2
               2:  cur_res=fit_results_maps.v3
               3:  cur_res=fit_results_maps.v_shift
+              4: cur_res=fit_results_maps.v_shi_cmp
 
             ENDCASE
             cur_res_name=cur_subtype+"  "+cur_type
             cur_res_index=total(num_res_subtypes[0:1])+index
           end
           "Dispersion": begin
-            possible=["Central comp.","Blue comp.", "Red comp."]
+            possible=["Central comp.","Blue comp.", "Red comp.","Shift.comp."]
             index=where(possible eq cur_subtype)
             CASE index OF
               0: cur_res=fit_results_maps.sigma1
               1:  cur_res=fit_results_maps.sigma2
               2:  cur_res=fit_results_maps.sigma3
+              3: cur_res=fit_results_maps.sigma_shi_cmp
             ENDCASE
             cur_res_name=cur_subtype+"  "+cur_type
             cur_res_index=total(num_res_subtypes[0:2])+index
@@ -1410,19 +1501,19 @@ end
           end
           "Flux": begin
             set_num=0
-            possible=["Total", "Central comp.", "Blue comp.", "Red comp."]
+            possible=["Total", "Central comp.", "Blue comp.", "Red comp.","Shift.comp."]
           end
           "Intensity": begin
             set_num=1
-            possible=["Central comp.", "Blue comp.", "Red comp."]
+            possible=["Central comp.", "Blue comp.", "Red comp.","Shift.comp."]
           end
           "Velocity": begin
             set_num=2
-            possible=["Central comp.", "Blue comp.", "Red comp.", "Shift map"]
+            possible=["Central comp.", "Blue comp.", "Red comp.","Shift.comp.", "Diff. map"]
           end
           "Dispersion": begin
             set_num=3
-            possible=["Central comp.", "Blue comp.", "Red comp."]
+            possible=["Central comp.", "Blue comp.", "Red comp.","Shift.comp."]
           end
           "S/N ratio": begin
             set_num=5
@@ -1456,12 +1547,14 @@ end
         COMMON KS_DISPLAY
         COMMON KS_DATA
         COMMON KS_ANALYSIS
+        COMMON KS_WIDGET_ELEMENTS
         
         nz=sxpar(header_cub,"NAXIS3")
         nx=sxpar(header_cub,"NAXIS1")
         ny=sxpar(header_cub,"NAXIS2")
         refpix=sxpar(header_cub,"CRPIX3")
         xdelt=sxpar(header_cub,"CDELT3")
+        if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3")
         if refpix eq 0 then refpix=1
         xscale=(findgen(nz)-refpix+1)*xdelt+sxpar(header_cub,"CRVAL3")
         prof=fltarr(nz)
@@ -1516,12 +1609,19 @@ end
           m0=0 
         endelse
         maxpos=moms[1]
+        show_xscale=prof_xrange
+        WIDGET_CONTROL,field_xrange[0],get_value=tmp
+        show_xscale[0]=tmp
+        WIDGET_CONTROL,field_xrange[1],get_value=tmp
+        show_xscale[1]=tmp
+        if xscale[0] gt show_xscale[0] then show_xscale[0]=xscale[0]
+        if xscale[nz-1] lt show_xscale[1] then show_xscale[1]=xscale[nz-1]
         cgplot,xscale,prof, title="X = "+string(xim,format="(I0)")+"; Y = "+string(yim,format="(I0)")+"; S/N = "+string(snr,format="(I0)"),$
-              ytit = "Intensity, "+ axes_info.I, xtit = xtit ,xst=1,yst=1, background="white",psym=10
+              ytit = "Intensity, "+ axes_info.I, xtit = xtit ,xst=1,yst=1, background="white",psym=10,xrange=[show_xscale[0],show_xscale[1]]
         cgoplot,[maxpos,maxpos],[m0,m1],linest=2,color="BLK6"      ;[xscale[maxpos],xscale[maxpos]]
-        cgoplot,[maxpos+4*moms[2],maxpos+4*moms[2]],[m0,m1],linest=1,color="BLK6"
-        cgoplot,[maxpos-4*moms[2],maxpos-4*moms[2]],[m0,m1],linest=1,color="BLK6"
-        cgoplot,[xscale[0],xscale[nz-1]],[contin,contin],linest=1,color="BLK6"
+        cgoplot,[maxpos+4*moms[2],maxpos+4*moms[2]],[m0,m1],linest=1,color="BLK6";,xrange=[show_xscale[0],show_xscale[1]]
+        cgoplot,[maxpos-4*moms[2],maxpos-4*moms[2]],[m0,m1],linest=1,color="BLK6";,xrange=[show_xscale[0],show_xscale[1]]
+        cgoplot,[xscale[0],xscale[nz-1]],[contin,contin],linest=1,color="BLK6";,xrange=[show_xscale[0],show_xscale[1]]
         
         ; Если фиттинг в данной точке проведен - загружаем модели
         IF inreg then begin
@@ -1531,7 +1631,20 @@ end
             if fit_results_maps.is_set2[xim,yim] eq 1 then cgoplot,xscale,(fit_results_model.c2[xim,yim,*]+this_contin),color="blue"
             if fit_results_maps.is_set3[xim,yim] eq 1 then cgoplot,xscale,(fit_results_model.c3[xim,yim,*]+this_contin),color="red"
             if fit_results_maps.is_set1[xim,yim] eq 1 or fit_results_maps.is_set2[xim,yim] eq 1 $
-              or fit_results_maps.is_set3[xim,yim] eq 1 then cgoplot,xscale,(fit_results_model.resid[xim,yim,*]+this_contin),color="yellow"
+              or fit_results_maps.is_set3[xim,yim] eq 1 then begin
+                cgoplot,xscale,(fit_results_model.resid[xim,yim,*]+this_contin),color="yellow"
+                
+                tot=xscale*0+this_contin
+                if fit_results_maps.is_set1[xim,yim] eq 1 then tot+=fit_results_model.c1[xim,yim,*]
+                if fit_results_maps.is_set2[xim,yim] eq 1 then tot+=fit_results_model.c2[xim,yim,*]
+                if fit_results_maps.is_set3[xim,yim] eq 1 then tot+=fit_results_model.c3[xim,yim,*]
+                
+                 cgoplot,xscale,tot,color="magenta"
+                
+                
+                endif
+              
+              
 ;          endif
         ENDIF
        
@@ -1995,18 +2108,20 @@ end
             if n_elements(bord_draw_onIm_x) ge 3 and $
             total(abs(bord_draw_onIm_x-bord_draw_onIm_x[0])) gt 0 $
             and total(abs(bord_draw_onIm_y-bord_draw_onIm_y[0])) gt 0  then $
-                entire_reg= polyfillv(bord_draw_onIm_x,bord_draw_onIm_y,nx,ny)$
+            ;Из-за того, что мы пиксель считаем не от его центра, а от начала, 
+            ;а программа polyfillv криво считает 0-е пиксели (видимо, сдвигая все на 1) - прибавляем 0.5
+                entire_reg= polyfillv(bord_draw_onIm_x+0.5,bord_draw_onIm_y+0.5,nx,ny)$
                 else entire_reg=-1
           endif
           if selection_shape.val eq 1 then begin
             ; For circle shape
-            dist_circle, rad_dist, [nx,ny], (round(bord_draw_onIm_x[0]) < (nx-1)), (round(bord_draw_onIm_y[0]) < (ny-1) )
+            ;Из-за того, что мы пиксель считаем не от его центра, а от начала, вычитаем 0.5
+            dist_circle, rad_dist, [nx,ny], ((bord_draw_onIm_x[0]-0.5) < (nx-1)), ((bord_draw_onIm_y[0]-0.5) < (ny-1) )
             if mode_view[type].val eq 0 then begin
               bord_draw_onIm_x[1]=bord_draw[1].x*double(nx)/round((sz[1].x)*(cur_pos_on_disp[2]-cur_pos_on_disp[0]))/zoom_factor[type].x
             endif else bord_draw_onIm_x[1]-=xscr_cur[type]
             entire_reg = where( abs(rad_dist) le bord_draw_onIm_x[1])
           endif 
-          
           CASE cur_sel_mode OF
             0: BEGIN ;Подстройка яркости
               if n_elements(entire_reg) gt 10 then begin
@@ -2073,49 +2188,6 @@ end
               markers=[markers, insert]
               KS_SHOW_IMAGE,mode="cube"
               if curprof_monitor eq 0 then KS_SHOW_IMAGE,mode="result"
-              
-              
-;              ;#### Костыль для NGC4068
-;              nmrk=n_elements(markers)
-;              x=[-1]
-;              y=[-1]
-;              name=['']
-;              FOR i=1, nmrk-1 do begin
-;                npt=n_elements((*markers[i].points).x)
-;                name=[name,replicate(string(i,format="(I0)"),npt)]
-;                x=[x,(*markers[i].points).x]
-;                y=[y,(*markers[i].points).y]
-;              ENDFOR
-;              nn=n_elements(name)-1
-;              name=name[1:nn]
-;              x=x[1:nn]
-;              y=y[1:nn]
-;              
-;              nn1=nn/4
-;              nnm= nn mod 4
-;              
-;              
-;              print,"##########################"
-;              print,"    "
-;              
-;              
-;              openw,u,"/Users/mors/Science/Conferences/Australia-2015/Preparing/N4068/pos.txt",/get_lun
-;              
-;              printf,u,"name=[$"
-;              if nn1 gt 0 then for i=0,nn1-1 do printf,u,string(name[i*4])+", "+string(name[i*4+1])+", "+string(name[i*4+2])+", "+string(name[i*4+3])+",$"
-;              if nnm gt 0 then for i=nn1*4,nn1*4+nnm-1 do  printf,u,string(name[i])+",$"
-;              printf,u,"'endpoint']
-;              printf,u,"pix_x=[$"
-;              if nn1 gt 0 then for i=0,nn1-1 do printf,u,string(x[i*4],format="(F0.11)")+", "+string(x[i*4+1],format="(F0.11)")+", "+string(x[i*4+2],format="(F0.11)")+", "+string(x[i*4+3],format="(F0.11)")+",$"
-;              if nnm gt 0 then for i=nn1*4,nn1*4+nnm-1 do  printf,u,string(x[i],format="(F0.11)")+",$"
-;              printf,u,"-1000]
-;              printf,u,"pix_y=[$"
-;              if nn1 gt 0 then for i=0,nn1-1 do printf,u,string(y[i*4],format="(F0.11)")+", "+string(y[i*4+1],format="(F0.11)")+", "+string(y[i*4+2],format="(F0.11)")+", "+string(y[i*4+3],format="(F0.11)")+",$"
-;              if nnm gt 0 then for i=nn1*4,nn1*4+nnm-1 do  printf,u,string(y[i],format="(F0.11)")+",$"
-;              printf,u,"-1000]
-;              
-;              close,u
-;              free_lun,u
             END
             3: BEGIN ; Cross-section
               
@@ -2152,12 +2224,12 @@ end
               KS_SHOW_IMAGE,mode="cube"
               if curprof_monitor eq 0 then KS_SHOW_IMAGE,mode="result"
             END
+           
             5: BEGIN ; Select fit region
               mark_name = cur_fit_selection.name
               mark_color = cur_fit_selection.color
               insert=KS_SAVE_SHAPE(bord_draw_onIm_x,bord_draw_onIm_y,selection_shape, h, mark_name, mark_color)
               cur_fit_selection = insert
-              
               an_infomessage[1]=mark_color+" shape"
               WIDGET_CONTROL,ks_an_info_label[0],set_value=an_infomessage[0]+an_infomessage[1]
               
@@ -2170,6 +2242,15 @@ end
               KS_SHOW_IMAGE,mode="cube"
               if curprof_monitor eq 0 then KS_SHOW_IMAGE,mode="result"
             END
+            
+            6: BEGIN ;Mask or something else
+            
+            END
+            
+            7: BEGIN ;PV diagram
+            
+            END
+            
             ELSE:
          ENDCASE
       END
@@ -2178,7 +2259,7 @@ end
 
       PRO KS_LOAD_FILE, mode=mode
         ; Процедура для загрузки куба, изображения или лога с результатами
-        ; mode="cube", "image", "result"
+        ; mode="cube", "image", "binmap", "result"
         COMMON KS_DATA
         COMMON KS_DISPLAY
         COMMON KS_WIDGET_ELEMENTS
@@ -2186,12 +2267,12 @@ end
         COMMON KS_FLAGS_AND_PARAMS
         COMMON KS_ANALYSIS
         COMMON KS_ANAL_MANAGER_WIDGET
-        type=(where(["cube","image"] eq mode, nr))[0]
+        type=(where(["cube","image","binmap"] eq mode, nr))[0]
         if nr ne 1 then begin
           mes=dialog_message("Error! Incorrect usage of KS_LOAD_FILE (incorrect mode)")
           return
         endif  
-        tit=["Data Cube", "Image"]
+        tit=["Data Cube", "Image", "BinMap"]
         filter=['*.f*ts','*.F*TS']
         file=DIALOG_PICKFILE(title='Load '+tit[type],filter=filter,get_path=w_dir)
         inf=FILE_INFO(file)
@@ -2204,7 +2285,7 @@ end
           h_tmp=headfits(file)
           
           ; проверка на то, что загружаем куб или изображение в первый раз (далее нужно для зума)
-          if total([cub_loaded,im_loaded]) eq 0 then check_param=1 else check_param=0
+          if total([cub_loaded,im_loaded, binmap_loaded]) eq 0 then check_param=1 else check_param=0
           
           IF TYPE eq 0 then begin
           ; Проверяем, куб ли это???
@@ -2213,7 +2294,7 @@ end
               return
             endif
             
-            cub=readfits(file)
+            cub=readfits(file,/sil)
             header_cub=h_tmp
             cub_loaded=1
             cub_2d=KS_IMCUBE(cub, chan=cur_channel, head_in=header_cub, head_out=header_cub_2d)
@@ -2223,7 +2304,7 @@ end
             
           ENDIF
           
-          IF TYPE eq 1 then begin
+          IF TYPE eq 1 or TYPE eq 2 then begin
           ; Проверяем, 2D-картинка ли это??? Если вдруг куб - то конвертим в картинку
             if sxpar(h_tmp,"NAXIS") lt 2 then begin
               mes=dialog_message("File should be at least 2D-size!")
@@ -2235,15 +2316,27 @@ end
               return
             endif
             
-            image=readfits(file)
-            header_image=h_tmp
-            im_loaded=1
-            if sxpar(h_tmp,"NAXIS") gt 3 then begin
-              if sxpar(h_tmp,"NAXIS4") gt 1 then image=reform(total(image,4)) else image=reform(image) 
-            endif
-            if sxpar(h_tmp,"NAXIS") gt 2 then image=KS_IMCUBE(image, head_in=header_image, head_out=header_image)
-            cur_im=image
-            h_cur_im=header_image
+            if type eq 1 then begin
+              image=readfits(file,/sil)
+              header_image=h_tmp
+              im_loaded=1
+              if sxpar(h_tmp,"NAXIS") gt 3 then begin
+                if sxpar(h_tmp,"NAXIS4") gt 1 then image=reform(total(image,4)) else image=reform(image) 
+              endif
+              if sxpar(h_tmp,"NAXIS") gt 2 then image=KS_IMCUBE(image, head_in=header_image, head_out=header_image)
+              cur_im=image
+              h_cur_im=header_image
+            endif else begin
+              binmap=readfits(file,/sil)
+              header_binmap=h_tmp
+              binmap_loaded=1
+              if sxpar(h_tmp,"NAXIS") gt 3 then begin
+                if sxpar(h_tmp,"NAXIS4") gt 1 then binmap=reform(total(binmap,4)) else binmap=reform(binmap) 
+              endif
+              if sxpar(h_tmp,"NAXIS") gt 2 then binmap=KS_IMCUBE(binmap, head_in=header_binmap, head_out=header_binmap)
+              cur_binmap=binmap
+              h_cur_binmap=header_binmap
+            endelse
           ENDIF
           
           filenames[type]=file
@@ -2261,9 +2354,10 @@ end
             WIDGET_CONTROL,buttons[4].obj,sensitive=1
             WIDGET_CONTROL,buttons[5].obj,sensitive=1
             
-            buttons[13:14].sens=1
+            buttons[13:15].sens=1
             WIDGET_CONTROL,buttons[13].obj,sensitive=1
             WIDGET_CONTROL,buttons[14].obj,sensitive=1
+            WIDGET_CONTROL,buttons[15].obj,sensitive=1
             
             field_channels_obj->SetProperty, NonSensitive=0
             show_type[0].val=0
@@ -2277,8 +2371,17 @@ end
             
             nx=sxpar(h_cur_im,"NAXIS1")
             ny=sxpar(h_cur_im,"NAXIS2")
-            moms_on_fly={snr: fltarr(nx,ny), mom0:fltarr(nx,ny), mom1: fltarr(nx,ny), $
-                        mom2: fltarr(nx,ny), mom3: fltarr(nx,ny), mom4: fltarr(nx,ny), contin: fltarr(nx,ny), done: intarr(nx,ny)}
+            
+            nz=sxpar(header_cub,"NAXIS3")
+            refpix=sxpar(header_cub,"CRPIX3")
+            xdelt=sxpar(header_cub,"CDELT3")
+            if xdelt eq 0 then xdelt=sxpar(header_cub,"CD3_3") 
+            if refpix eq 0 then refpix=1
+            prof_xrange=([0,nz-1]-refpix+1)*xdelt+sxpar(header_cub,"CRVAL3")
+            WIDGET_CONTROL, field_xrange[0],set_value=prof_xrange[0]
+            WIDGET_CONTROL, field_xrange[1],set_value=prof_xrange[1]
+            moms_on_fly={snr: dblarr(nx,ny), mom0:dblarr(nx,ny), mom1: dblarr(nx,ny), $
+                        mom2: dblarr(nx,ny), mom3: dblarr(nx,ny), mom4: dblarr(nx,ny), contin: dblarr(nx,ny), done: intarr(nx,ny)}
             
             anal_buttons[2:3].sens=1
             if cur_fit_selection.type eq -1 then begin
@@ -2477,18 +2580,26 @@ PRO KS_GO_EVENT, event
   ENDIF ELSE BEGIN
    
       CASE ev OF
-      
+          
           'load_cube': KS_LOAD_FILE, mode="cube"
           'load_image': KS_LOAD_FILE, mode="image"
           
           'show_header_c':XDISPSTR,header_cub,TITLE='Data Cube Header',group_leader=ks_mb
           'show_header_i':XDISPSTR,header_image,TITLE='Image Header',group_leader=ks_mb
           
+          'load_binmap': KS_LOAD_FILE, mode="binmap"
           
           'res_man': WIDGET_CONTROL,ks_resman_b,map=1
           'analysis': WIDGET_CONTROL,ks_anal_b,map=1
           'prof_man': WIDGET_CONTROL,ks_profman_b,map=1
           
+          'prof_display_xrange': BEGIN
+              WIDGET_CONTROL,field_xrange[0],get_val=tmp
+              prof_xrange[0]=tmp
+              WIDGET_CONTROL,field_xrange[1],get_val=tmp
+              prof_xrange[1]=tmp
+;              KS_SHOW_IMAGE, mode=choose_mode[type]
+            END
           
           'sel_mode_left': BEGIN
               WIDGET_CONTROL,selection_mode[0].obj,get_value=tmp
@@ -2839,7 +2950,9 @@ PRO KS_GO
                
                ;Prof and markers managers
                {obj_par,'Profiles manager','prof_man',0,0,0},$ ;#13
-               {obj_par,'Markers manager','mark_man',0,0,0}] ;#14
+               {obj_par,'Markers manager','mark_man',0,0,0},$ ;#14
+               
+               {obj_par,'Load Voronoi Bin Map','load_binmap',0,0,0}] ;#15
                
       
       
@@ -2852,10 +2965,11 @@ PRO KS_GO
       ks_butbase_r=WIDGET_BASE(ks_butbase_cols,/col, xpad=0,xoffset=0)
       ;output=lonarr(2)
       KS_Buttons_Cre,ks_butbase_r,buttons[2:3].name,buttons[2:3].uval,output,sens=buttons[2:3].sens,xs=sz[2].x,ys=sz[2].y;,break_arr=[1,3,5]
+      
       buttons[2:3].obj=output
       ;output=lonarr(3)
-      ind=[4,5,13,14,6]
-      KS_Buttons_Cre,ks_butbase,buttons[ind].name,buttons[ind].uval,output,sens=buttons[ind].sens,xs=sz[2].x*2+3,ys=sz[2].y,break_arr=[1,3]
+      ind=[15,4,5,13,14,6]
+      KS_Buttons_Cre,ks_butbase,buttons[ind].name,buttons[ind].uval,output,sens=buttons[ind].sens,xs=sz[2].x*2+3,ys=sz[2].y,break_arr=[0,2,4]
       buttons[ind].obj=output
       
       ks_break=WIDGET_BASE(ks_butbase,/column, ys=1)
@@ -3072,6 +3186,18 @@ PRO KS_GO
                 field_brtmin_obj[1]=tmp_obj
                 field_brtmax[1]=FSC_FIELD(ks_tmp_b,Title='Max:', value=brtmax[4],uvalue='BRT_RES_MIMAX',Event_Pro='KS_GO_Event',/CR_Only,LabelSize=25,xs=8,nonsens=1, object=tmp_obj)
                 field_brtmax_obj[1]=tmp_obj
+  
+                ; === Диапазон длин волн/скоростей (для профиля)
+                field_xrange_obj=objarr(2)
+                field_xrange=lonarr(2)
+                lab=WIDGET_LABEL(ks_brt_right_b,val="Prof. X-range:",font=titfont)
+                ks_tmp_b=WIDGET_BASE(ks_brt_right_b,/row,/frame)
+                field_xrange[0]=FSC_FIELD(ks_tmp_b,Title='Min:', value=prof_xrange[0],uvalue='prof_display_xrange',Event_Pro='KS_GO_Event',/CR_Only,LabelSize=25,xs=8,nonsens=0, object=tmp_obj)
+                field_xrange_obj[0]=tmp_obj
+                field_xrange[1]=FSC_FIELD(ks_tmp_b,Title='Max:', value=prof_xrange[1],uvalue='prof_display_xrange',Event_Pro='KS_GO_Event',/CR_Only,LabelSize=25,xs=8,nonsens=0, object=tmp_obj)
+                field_xrange_obj[1]=tmp_obj
+
+  
   
   
   KS_INI_RES_STRUCT, 1,1,1
